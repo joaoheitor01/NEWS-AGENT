@@ -48,7 +48,7 @@ const TOPICS = {
   }
 };
 
-function NewsCard({ noticia, index, onExpand, expanded }) {
+function NewsCard({ noticia, index, onExpand, expanded, onSave, isSaved }) {
   const impactColor = {
     alto: "#ff4d6d",
     médio: "#ffd60a",
@@ -62,7 +62,7 @@ function NewsCard({ noticia, index, onExpand, expanded }) {
     OpenAI: "O",
     GitHub: "⌥",
     Meta: "◈",
-    Apple: "",
+    Apple: "",
     default: "◆",
   };
 
@@ -84,7 +84,6 @@ function NewsCard({ noticia, index, onExpand, expanded }) {
         position: "relative",
         overflow: "hidden",
       }}
-      onClick={() => onExpand(index)}
       onMouseEnter={(e) => {
         e.currentTarget.style.background = "rgba(255,255,255,0.06)";
         e.currentTarget.style.transform = "translateX(4px)";
@@ -114,7 +113,7 @@ function NewsCard({ noticia, index, onExpand, expanded }) {
           {icon}
         </div>
 
-        <div style={{ flex: 1 }}>
+        <div style={{ flex: 1 }} onClick={() => onExpand(index)}>
           <div
             style={{
               display: "flex",
@@ -184,34 +183,36 @@ function NewsCard({ noticia, index, onExpand, expanded }) {
               >
                 {noticia.resumo}
               </p>
-              <a
-                href={noticia.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  fontSize: "12px",
-                  color: color,
-                  textDecoration: "none",
-                  fontFamily: "'Space Mono', monospace",
-                  background: `${color}10`,
-                  border: `1px solid ${color}30`,
-                  padding: "6px 12px",
-                  borderRadius: "6px",
-                  transition: "all 0.2s",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = `${color}20`;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = `${color}10`;
-                }}
-              >
-                ↗ Ler notícia completa
-              </a>
+              <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                <a
+                  href={noticia.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    fontSize: "12px",
+                    color: color,
+                    textDecoration: "none",
+                    fontFamily: "'Space Mono', monospace",
+                    background: `${color}10`,
+                    border: `1px solid ${color}30`,
+                    padding: "6px 12px",
+                    borderRadius: "6px",
+                    transition: "all 0.2s",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = `${color}20`;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = `${color}10`;
+                  }}
+                >
+                  ↗ Ler completa
+                </a>
+              </div>
             </div>
           )}
 
@@ -234,14 +235,54 @@ function NewsCard({ noticia, index, onExpand, expanded }) {
 
         <div
           style={{
-            fontSize: "12px",
-            color: "rgba(255,255,255,0.2)",
-            transition: "transform 0.2s",
-            transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
+            display: "flex",
+            gap: "8px",
+            flexDirection: "column",
             flexShrink: 0,
+            alignItems: "center",
           }}
         >
-          ▾
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onSave(index);
+            }}
+            style={{
+              background: isSaved ? `${color}20` : "rgba(255,255,255,0.05)",
+              border: isSaved ? `1px solid ${color}40` : "1px solid rgba(255,255,255,0.1)",
+              color: isSaved ? color : "rgba(255,255,255,0.3)",
+              width: "32px",
+              height: "32px",
+              borderRadius: "6px",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "16px",
+              transition: "all 0.2s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = isSaved ? `${color}30` : "rgba(255,255,255,0.08)";
+              e.currentTarget.style.transform = "scale(1.1)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = isSaved ? `${color}20` : "rgba(255,255,255,0.05)";
+              e.currentTarget.style.transform = "scale(1)";
+            }}
+            title={isSaved ? "Remover dos salvos" : "Salvar notícia"}
+          >
+            {isSaved ? "❤️" : "🤍"}
+          </button>
+          <div
+            style={{
+              fontSize: "12px",
+              color: "rgba(255,255,255,0.2)",
+              transition: "transform 0.2s",
+              transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
+            }}
+          >
+            ▾
+          </div>
         </div>
       </div>
     </div>
@@ -258,10 +299,22 @@ export default function NewsAgent() {
   const [cacheMoment, setCacheMoment] = useState(null);
   const [usandoCache, setUsandoCache] = useState(false);
   const [selectedTopic, setSelectedTopic] = useState(null);
+  const [noticiasSalvas, setNoticiasSalvas] = useState([]);
+  const [mostraSalvas, setMostraSalvas] = useState(false);
   const logRef = useRef(null);
 
-  // Verifica cache ao montar o componente
+  // Carrega notícias salvas do localStorage ao montar
   useEffect(() => {
+    const salvasData = localStorage.getItem('noticias_salvas');
+    if (salvasData) {
+      try {
+        const salvas = JSON.parse(salvasData);
+        setNoticiasSalvas(salvas);
+      } catch (e) {
+        console.error('Erro ao carregar salvas:', e);
+      }
+    }
+  }, []);
     const cacheData = localStorage.getItem('noticias_cache');
     const cacheTs = localStorage.getItem('noticias_cache_ts');
     
@@ -308,6 +361,27 @@ export default function NewsAgent() {
       ...prev,
       { msg, color: colors[type], id: Date.now() + Math.random() },
     ]);
+  };
+
+  const salvarNoticia = (index) => {
+    const noticia = noticias[index];
+    const jaExiste = noticiasSalvas.some(n => n.link === noticia.link);
+    
+    let novasSalvas;
+    if (jaExiste) {
+      novasSalvas = noticiasSalvas.filter(n => n.link !== noticia.link);
+      addLog("✓ Notícia removida dos salvos", "success");
+    } else {
+      novasSalvas = [...noticiasSalvas, { ...noticia, dataSalva: new Date().toISOString() }];
+      addLog("✓ Notícia salva com sucesso", "success");
+    }
+    
+    setNoticiasSalvas(novasSalvas);
+    localStorage.setItem('noticias_salvas', JSON.stringify(novasSalvas));
+  };
+
+  const estaRemovido = (link) => {
+    return noticiasSalvas.some(n => n.link === link);
   };
 
   const buscarNoticias = async () => {
@@ -759,6 +833,49 @@ export default function NewsAgent() {
                   )}
                 </button>
               )}
+
+              {noticiasSalvas.length > 0 && (
+                <button
+                  onClick={() => setMostraSalvas(!mostraSalvas)}
+                  style={{
+                    flex: 1,
+                    minWidth: "150px",
+                    padding: "14px 24px",
+                    background: mostraSalvas
+                      ? "rgba(255, 77, 109, 0.15)"
+                      : "rgba(255,255,255,0.05)",
+                    border: mostraSalvas
+                      ? "1px solid rgba(255, 77, 109, 0.3)"
+                      : "1px solid rgba(255,255,255,0.1)",
+                    borderRadius: "12px",
+                    color: mostraSalvas ? "#ff4d6d" : "rgba(255,255,255,0.6)",
+                    fontSize: "14px",
+                    fontFamily: "'Syne', sans-serif",
+                    fontWeight: "700",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "8px",
+                    transition: "all 0.2s",
+                    letterSpacing: "0.02em",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!mostraSalvas) {
+                      e.currentTarget.style.background = "rgba(255,77,109,0.08)";
+                      e.currentTarget.style.transform = "translateY(-1px)";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!mostraSalvas) {
+                      e.currentTarget.style.background = "rgba(255,255,255,0.05)";
+                    }
+                    e.currentTarget.style.transform = "translateY(0)";
+                  }}
+                >
+                  ❤️ Salvos ({noticiasSalvas.length})
+                </button>
+              )}
             </div>
           </div>
 
@@ -849,8 +966,96 @@ export default function NewsAgent() {
                   index={i}
                   expanded={expandedIndex === i}
                   onExpand={handleExpand}
+                  onSave={salvarNoticia}
+                  isSaved={estaRemovido(n.link)}
                 />
               ))}
+            </div>
+          )}
+
+          {mostraSalvas && noticiasSalvas.length > 0 && (
+            <div>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  marginBottom: "20px",
+                  justifyContent: "space-between",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: "11px",
+                      fontFamily: "'Space Mono', monospace",
+                      color: "rgba(255,255,255,0.3)",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.1em",
+                    }}
+                  >
+                    ❤️ {noticiasSalvas.length} notícia{noticiasSalvas.length !== 1 ? "s" : ""} salva{noticiasSalvas.length !== 1 ? "s" : ""}
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setNoticiasSalvas([]);
+                    localStorage.removeItem('noticias_salvas');
+                    setMostraSalvas(false);
+                    addLog("✓ Todos os salvos foram removidos", "success");
+                  }}
+                  style={{
+                    fontSize: "12px",
+                    fontFamily: "'Space Mono', monospace",
+                    color: "rgba(255,77,109,0.6)",
+                    background: "rgba(255,77,109,0.05)",
+                    border: "1px solid rgba(255,77,109,0.2)",
+                    padding: "4px 8px",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                    transition: "all 0.2s",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = "rgba(255,77,109,0.9)";
+                    e.currentTarget.style.background = "rgba(255,77,109,0.1)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color = "rgba(255,77,109,0.6)";
+                    e.currentTarget.style.background = "rgba(255,77,109,0.05)";
+                  }}
+                >
+                  Limpar tudo
+                </button>
+              </div>
+
+              {noticiasSalvas.map((n, i) => {
+                const expandedState = `salvas_${i}`;
+                const isExpandedSalva = expandedIndex === expandedState;
+                
+                return (
+                  <div key={i}>
+                    <NewsCard
+                      noticia={n}
+                      index={i}
+                      expanded={isExpandedSalva}
+                      onExpand={() => setExpandedIndex(isExpandedSalva ? null : expandedState)}
+                      onSave={() => {
+                        const novasSalvas = noticiasSalvas.filter((_, idx) => idx !== i);
+                        setNoticiasSalvas(novasSalvas);
+                        localStorage.setItem('noticias_salvas', JSON.stringify(novasSalvas));
+                        addLog("✓ Notícia removida dos salvos", "success");
+                      }}
+                      isSaved={true}
+                    />
+                  </div>
+                );
+              })}
             </div>
           )}
 
