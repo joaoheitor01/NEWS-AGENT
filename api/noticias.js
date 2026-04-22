@@ -6,20 +6,16 @@ const FEEDS = [
   // === BRASIL — Notícias diárias ===
   { url: 'https://canaltech.com.br/rss/',                          nome: 'Canaltech',        pais: 'BR' },
   { url: 'https://olhardigital.com.br/feed/',                      nome: 'Olhar Digital',    pais: 'BR' },
-  { url: 'https://www.tecmundo.com.br/feed',                       nome: 'TecMundo',         pais: 'BR' },
   { url: 'https://tecnoblog.net/feed/',                            nome: 'Tecnoblog',        pais: 'BR' },
   { url: 'https://www.showmetech.com.br/feed/',                    nome: 'Show Me Tech',     pais: 'BR' },
 
   // === BRASIL — Hardware e Infraestrutura ===
-  { url: 'https://www.clubedohardware.com.br/rss/1-noticias/',     nome: 'Clube do Hardware',pais: 'BR' },
   { url: 'https://diolinux.com.br/feed',                           nome: 'Diolinux',         pais: 'BR' },
 
   // === BRASIL — Desenvolvimento e Engenharia ===
   { url: 'https://www.tabnews.com.br/recentes/rss',                nome: 'TabNews',          pais: 'BR' },
-  { url: 'https://codigofonte.com.br/feed',                        nome: 'Código Fonte TV',  pais: 'BR' },
 
   // === BRASIL — Mercado e Negócios Tech ===
-  { url: 'https://exame.com/tecnologia/feed/',                     nome: 'Exame Tecnologia', pais: 'BR' },
   { url: 'https://www.infomoney.com.br/feed/',                     nome: 'InfoMoney',        pais: 'BR' },
 
   // === INTERNACIONAL — Referências globais ===
@@ -28,36 +24,64 @@ const FEEDS = [
   { url: 'https://www.wired.com/feed/rss',                         nome: 'Wired',            pais: 'US' },
 ];
 
-// Palavras-chave que definem o conteúdo relevante
+// Palavras-chave que definem o conteúdo relevante - Agrupadas por Tópicos
+// Sem palavras-chave genéricas sobre Big Tech (Google AI, Microsoft, Anthropic, GitHub, OpenAI, Gemini, Meta AI, Apple)
 const KEYWORDS = [
-  // IA e modelos
-  'inteligência artificial', 'ia ', ' ia,', 'ai ', 'artificial intelligence',
-  'llm', 'gpt', 'gemini', 'claude', 'copilot', 'machine learning',
-  'deep learning', 'neural', 'chatgpt', 'openai', 'anthropic',
+  // === 1. Mercado de TI e Setor Público (Brasil) ===
+  'mercado de ti', 'mercado ti brasil', 'mato grosso', 'desenvolvedor fullstack',
+  'setor público', 'inovação tecnológica', 'transformação digital', 'govtech',
+  'concursos ti', 'inovação governo', 'edital tecnologia', 'demandas desenvolvedor',
+  'profissional ti mato grosso', 'tech mato grosso', 'ti brasil',
 
-  // Empresas globais
-  'google', 'microsoft', 'meta', 'apple', 'amazon', 'nvidia',
-  'samsung', 'intel', 'qualcomm',
+  // === 2. Inteligência Artificial e Automação (foco técnico) ===
+  'inteligência artificial', 'ia ', 'ai ', 'machine learning', 'deep learning',
+  'llm', 'modelo linguagem', 'chatbot', 'processamento natural', 'nlp', 'neural',
+  'openrouter api', 'n8n workflows', 'automação workflow', 'integração ai', 
+  'ia generativa', 'impacto ia', 'llm open source', 'llama modelo', 'falcon modelo',
+  'avanços llm', 'modelos codigo aberto',
 
-  // Empresas e mercado BR
-  'github', 'startup', 'nubank', 'ifood', 'totvs',
-  'mercado livre', 'magalu', 'b3', 'fintec', 'fintech',
+  // === 3. Engenharia de Hardware e IA (infraestrutura) ===
+  'nvidia', 'gpu nvidia', 'cuda', 'ampere', 'hopper', 'blackwell',
+  'gpu', 'processador', 'ia hardware', 'engenheiro hardware',
+  'especialista cibersegurança', 'data center', 'arquitetura servidores',
+  'amd ryzen', 'amd', 'intel', 'intel foundries', 'arm',
+  'asml', 'tsmc', 'chips', 'semicondutores', 'placa de vídeo',
+  'memória ram', 'ssd', 'benchmark', 'ryzen ai', 'geforce',
+  'radeon', 'baixo consumo', 'mobile ia', 'fabricação chips', 'foundries',
 
-  // Dev e infra
-  'react', 'typescript', 'python', 'django', 'node', 'kubernetes',
-  'docker', 'linux', 'open source', 'open-source', 'kernel',
-  'ubuntu', 'fedora', 'distribuição', 'framework', 'api',
+  // === 4. Desenvolvimento e Integração (foco FullStack) ===
+  'engenheiro prompt', 'desenvolvedor integrações', 'mlops', 'fullstack developer',
+  'fullstack ia', 'react', 'typescript', 'python', 'django', 'node',
+  'javascript', 'java', 'kubernetes', 'docker', 'devops', 'api',
+  'framework', 'backend', 'frontend', 'web development', 'stack tecnológico',
+  'integração sistemas',
 
-  // Hardware
-  'processador', 'gpu', 'placa de vídeo', 'memória ram', 'ssd',
-  'benchmark', 'ryzen', 'geforce', 'radeon',
+  // === 5. Infraestrutura e Open Source ===
+  'linux', 'ubuntu', 'fedora', 'open source', 'open-source', 'kernel',
+  'diolinux', 'sistema operacional', 'distribuição linux', 'nuvem', 'cloud',
+  'aws', 'azure', 'google cloud', 'infraestrutura cloud', 'computação em nuvem',
+  'data center', 'expansão cloud', 'investimento infraestrutura',
 
-  // Segurança
-  'cibersegurança', 'ransomware', 'vazamento', 'hack', 'segurança digital',
+  // === 6. Venture Capital e Startups Brasil ===
+  'venture capital', 'investimento startup', 'rodada investimento', 'aporte',
+  'seed money', 'série a', 'série b', 'startup tech brasil', 'kaszek',
+  'monashees', 'bossanova', 'quantum brasil', 'starlight',
+  'm&a', 'fusões aquisições', 'startup financiamento',
 
-  // Geral tech
-  'tecnologia', 'tech', 'software', 'hardware', 'automação',
-  'nuvem', 'cloud', 'dados', 'blockchain', '5g', 'iot'
+  // === 7. Segurança Digital ===
+  'cibersegurança', 'ransomware', 'vazamento dados', 'hack', 'segurança digital',
+  'segurança informação', 'vulnerabilidade', 'proteção dados', 'privacy',
+  'especialista cibersegurança data center',
+
+  // === 8. Investimento Público e Fomento ===
+  'bndes', 'bndes financiamento', 'finep', 'finep editais', 'govtech',
+  'mcti', 'fomento pesquisa', 'edital inovação', 'investimento público',
+  'financiamento inovação', 'banco desenvolvimento', 'investimento bilionário',
+
+  // === 9. Geral Tech (catchall) ===
+  'tecnologia', 'tech', 'software', 'hardware', 'inovação',
+  'dados', 'blockchain', '5g', 'iot', '6g', 'web3',
+  'startup', 'fintec', 'fintech', 'edtech', 'healthtech'
 ];
 
 function isRelevant(item) {
@@ -146,7 +170,7 @@ module.exports = async function handler(req, res) {
         'X-Title': 'Tech News Agent'
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.0-flash:free',
+        model: 'openrouter/auto',
         max_tokens: 1500,
         temperature: 0.3,
         messages: [{

@@ -4,11 +4,10 @@ const Parser = require('rss-parser');
 const FEEDS = [
   { url: 'https://canaltech.com.br/rss/',              nome: 'Canaltech'         },
   { url: 'https://olhardigital.com.br/feed/',           nome: 'Olhar Digital'     },
-  { url: 'https://www.tecmundo.com.br/feed',            nome: 'TecMundo'          },
   { url: 'https://tecnoblog.net/feed/',                 nome: 'Tecnoblog'         },
   { url: 'https://www.tabnews.com.br/recentes/rss',     nome: 'TabNews'           },
   { url: 'https://diolinux.com.br/feed',                nome: 'Diolinux'          },
-  { url: 'https://exame.com/tecnologia/feed/',          nome: 'Exame Tecnologia'  },
+  { url: 'https://www.infomoney.com.br/feed/',          nome: 'InfoMoney'         },
   { url: 'https://www.theverge.com/rss/index.xml',      nome: 'The Verge'         },
   { url: 'https://feeds.feedburner.com/TechCrunch',     nome: 'TechCrunch'        },
 ];
@@ -42,7 +41,7 @@ module.exports = async function handler(req, res) {
         'X-Title': 'Tech News Agent Cron'
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.0-flash:free',
+        model: 'openrouter/auto',
         max_tokens: 600,
         messages: [{
           role: 'user',
