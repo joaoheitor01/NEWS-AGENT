@@ -117,9 +117,9 @@ export default function App() {
     }
   }, [log]);
 
-  // Filtra notícias baseado na aba selecionada
+  // Filtra notícias baseado na aba selecionada (só em abas, não em home)
   useEffect(() => {
-    if (noticiasOriginais.length > 0) {
+    if (noticiasOriginais.length > 0 && currentView !== "home") {
       const topicKeywords = {
         ia: ["AI", "IA", "inteligência artificial", "neural", "GPT", "transformer", "LLM", "machine learning"],
         hardware: ["hardware", "GPU", "NVIDIA", "processor", "chip", "ARM", "Intel", "benchmark"],
@@ -136,8 +136,12 @@ export default function App() {
 
       setNoticias(noticiasFiltradasPorTab.length > 0 ? noticiasFiltradasPorTab : noticiasOriginais);
       setExpandedIndex(null);
+    } else if (currentView === "home" && noticiasOriginais.length > 0) {
+      // Em home, mostra todas as notícias sem filtrar
+      setNoticias(noticiasOriginais);
+      setExpandedIndex(null);
     }
-  }, [selectedTab, noticiasOriginais]);
+  }, [selectedTab, noticiasOriginais, currentView]);
 
   const addLog = (msg) => {
     setLog((prev) => [...prev, { msg, id: Date.now() + Math.random() }]);
@@ -177,10 +181,13 @@ export default function App() {
     addLog("▶ filtering noise: 12.4k raw inputs processed");
     
     try {
+      // Se está em home, busca notícias gerais (null), senão busca por tópico
+      const topicToSearch = currentView === "home" ? null : selectedTab;
+      
       const response = await fetch("/api/noticias", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic: selectedTab }),
+        body: JSON.stringify({ topic: topicToSearch }),
       });
 
       if (!response.ok) {
