@@ -1,19 +1,52 @@
 import { useState, useEffect, useRef } from "react";
 
-const TOPICS = [
-  "Google AI 2025",
-  "Microsoft Copilot novidades",
-  "GitHub Copilot update",
-  "Anthropic Claude novidades",
-  "OpenAI GPT novidades",
-  "Gemini Google AI",
-  "inteligência artificial tecnologia",
-  "Meta AI novidades",
-  "Apple Intelligence",
-  "startup tecnologia Brasil",
-];
-
-// O prompt agora fica no backend por segurança, mas mantemos os tópicos aqui
+const TOPICS = {
+  mercado_ti: {
+    label: "Mercado TI Brasil",
+    icon: "💼",
+    description: "Setor público, Mato Grosso e inovação"
+  },
+  ia_automacao: {
+    label: "IA e Automação",
+    icon: "🤖",
+    description: "Modelos LLM, n8n e integrações"
+  },
+  hardware_ia: {
+    label: "Hardware & IA",
+    icon: "⚙️",
+    description: "GPU, NVIDIA, TSMC e infraestrutura"
+  },
+  desenvolvimento: {
+    label: "Desenvolvimento",
+    icon: "💻",
+    description: "FullStack, React, Python, DevOps"
+  },
+  infraestrutura: {
+    label: "Infraestrutura",
+    icon: "🌐",
+    description: "Cloud, Linux, AWS, Data Centers"
+  },
+  startups_vc: {
+    label: "Startups & VC",
+    icon: "🚀",
+    description: "Investimentos e rodadas de funding"
+  },
+  seguranca: {
+    label: "Segurança Digital",
+    icon: "🔒",
+    description: "Cibersegurança e proteção de dados"
+  },
+  investimento_publico: {
+    label: "Investimento Público",
+    icon: "🏛️",
+    description: "BNDES, Finep e fomento"
+  },
+  geral: {
+    label: "Geral Tech",
+    icon: "⚡",
+    description: "Tendências gerais de tecnologia"
+  }
+};
 
 function NewsCard({ noticia, index, onExpand, expanded }) {
   const impactColor = {
@@ -224,6 +257,7 @@ export default function NewsAgent() {
   const [fetched, setFetched] = useState(false);
   const [cacheMoment, setCacheMoment] = useState(null);
   const [usandoCache, setUsandoCache] = useState(false);
+  const [selectedTopic, setSelectedTopic] = useState(null);
   const logRef = useRef(null);
 
   // Verifica cache ao montar o componente
@@ -282,7 +316,7 @@ export default function NewsAgent() {
       const response = await fetch("/api/noticias", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
+        body: JSON.stringify({ topic: selectedTopic }),
       });
 
       if (!response.ok) {
@@ -546,34 +580,71 @@ export default function NewsAgent() {
               style={{
                 display: "flex",
                 flexWrap: "wrap",
-                gap: "6px",
+                gap: "8px",
                 marginBottom: "24px",
               }}
             >
-              {[
-                "Google AI",
-                "Microsoft",
-                "Anthropic",
-                "GitHub",
-                "OpenAI",
-                "Gemini",
-                "Meta AI",
-                "Apple",
-              ].map((t) => (
-                <span
-                  key={t}
+              <button
+                onClick={() => setSelectedTopic(null)}
+                style={{
+                  fontSize: "12px",
+                  fontFamily: "'Space Mono', monospace",
+                  color: selectedTopic === null ? "#6366f1" : "rgba(255,255,255,0.35)",
+                  background: selectedTopic === null ? "rgba(99,102,241,0.15)" : "rgba(255,255,255,0.04)",
+                  border: selectedTopic === null ? "1px solid rgba(99,102,241,0.3)" : "1px solid rgba(255,255,255,0.08)",
+                  padding: "6px 12px",
+                  borderRadius: "20px",
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  if (selectedTopic !== null) {
+                    e.currentTarget.style.background = "rgba(255,255,255,0.08)";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (selectedTopic !== null) {
+                    e.currentTarget.style.background = "rgba(255,255,255,0.04)";
+                  }
+                }}
+              >
+                ⭐ Todos os tópicos
+              </button>
+              
+              {Object.entries(TOPICS).map(([key, topic]) => (
+                <button
+                  key={key}
+                  onClick={() => setSelectedTopic(key)}
+                  title={topic.description}
                   style={{
-                    fontSize: "11px",
+                    fontSize: "12px",
                     fontFamily: "'Space Mono', monospace",
-                    color: "rgba(255,255,255,0.35)",
-                    background: "rgba(255,255,255,0.04)",
-                    border: "1px solid rgba(255,255,255,0.08)",
-                    padding: "3px 10px",
+                    color: selectedTopic === key ? "white" : "rgba(255,255,255,0.5)",
+                    background: selectedTopic === key ? "rgba(99,102,241,0.2)" : "rgba(255,255,255,0.04)",
+                    border: selectedTopic === key ? "1px solid rgba(99,102,241,0.4)" : "1px solid rgba(255,255,255,0.08)",
+                    padding: "6px 12px",
                     borderRadius: "20px",
+                    cursor: "pointer",
+                    transition: "all 0.2s",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "4px",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (selectedTopic !== key) {
+                      e.currentTarget.style.background = "rgba(99,102,241,0.1)";
+                      e.currentTarget.style.color = "rgba(255,255,255,0.7)";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (selectedTopic !== key) {
+                      e.currentTarget.style.background = "rgba(255,255,255,0.04)";
+                      e.currentTarget.style.color = "rgba(255,255,255,0.5)";
+                    }
                   }}
                 >
-                  {t}
-                </span>
+                  {topic.icon} {topic.label}
+                </button>
               ))}
             </div>
 

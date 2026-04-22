@@ -26,66 +26,75 @@ const FEEDS = [
 
 // Palavras-chave que definem o conteúdo relevante - Agrupadas por Tópicos
 // Sem palavras-chave genéricas sobre Big Tech (Google AI, Microsoft, Anthropic, GitHub, OpenAI, Gemini, Meta AI, Apple)
-const KEYWORDS = [
-  // === 1. Mercado de TI e Setor Público (Brasil) ===
-  'mercado de ti', 'mercado ti brasil', 'mato grosso', 'desenvolvedor fullstack',
-  'setor público', 'inovação tecnológica', 'transformação digital', 'govtech',
-  'concursos ti', 'inovação governo', 'edital tecnologia', 'demandas desenvolvedor',
-  'profissional ti mato grosso', 'tech mato grosso', 'ti brasil',
+const KEYWORDS_BY_TOPIC = {
+  mercado_ti: [
+    'mercado de ti', 'mercado ti brasil', 'mato grosso', 'desenvolvedor fullstack',
+    'setor público', 'inovação tecnológica', 'transformação digital', 'govtech',
+    'concursos ti', 'inovação governo', 'edital tecnologia', 'demandas desenvolvedor',
+    'profissional ti mato grosso', 'tech mato grosso', 'ti brasil'
+  ],
+  ia_automacao: [
+    'inteligência artificial', 'ia ', 'ai ', 'machine learning', 'deep learning',
+    'llm', 'modelo linguagem', 'chatbot', 'processamento natural', 'nlp', 'neural',
+    'openrouter api', 'n8n workflows', 'automação workflow', 'integração ai',
+    'ia generativa', 'impacto ia', 'llm open source', 'llama modelo', 'falcon modelo',
+    'avanços llm', 'modelos codigo aberto'
+  ],
+  hardware_ia: [
+    'nvidia', 'gpu nvidia', 'cuda', 'ampere', 'hopper', 'blackwell',
+    'gpu', 'processador', 'ia hardware', 'engenheiro hardware',
+    'especialista cibersegurança', 'data center', 'arquitetura servidores',
+    'amd ryzen', 'amd', 'intel', 'intel foundries', 'arm',
+    'asml', 'tsmc', 'chips', 'semicondutores', 'placa de vídeo',
+    'memória ram', 'ssd', 'benchmark', 'ryzen ai', 'geforce',
+    'radeon', 'baixo consumo', 'mobile ia', 'fabricação chips', 'foundries'
+  ],
+  desenvolvimento: [
+    'engenheiro prompt', 'desenvolvedor integrações', 'mlops', 'fullstack developer',
+    'fullstack ia', 'react', 'typescript', 'python', 'django', 'node',
+    'javascript', 'java', 'kubernetes', 'docker', 'devops', 'api',
+    'framework', 'backend', 'frontend', 'web development', 'stack tecnológico',
+    'integração sistemas'
+  ],
+  infraestrutura: [
+    'linux', 'ubuntu', 'fedora', 'open source', 'open-source', 'kernel',
+    'diolinux', 'sistema operacional', 'distribuição linux', 'nuvem', 'cloud',
+    'aws', 'azure', 'google cloud', 'infraestrutura cloud', 'computação em nuvem',
+    'data center', 'expansão cloud', 'investimento infraestrutura'
+  ],
+  startups_vc: [
+    'venture capital', 'investimento startup', 'rodada investimento', 'aporte',
+    'seed money', 'série a', 'série b', 'startup tech brasil', 'kaszek',
+    'monashees', 'bossanova', 'quantum brasil', 'starlight',
+    'm&a', 'fusões aquisições', 'startup financiamento'
+  ],
+  seguranca: [
+    'cibersegurança', 'ransomware', 'vazamento dados', 'hack', 'segurança digital',
+    'segurança informação', 'vulnerabilidade', 'proteção dados', 'privacy',
+    'especialista cibersegurança data center'
+  ],
+  investimento_publico: [
+    'bndes', 'bndes financiamento', 'finep', 'finep editais', 'govtech',
+    'mcti', 'fomento pesquisa', 'edital inovação', 'investimento público',
+    'financiamento inovação', 'banco desenvolvimento', 'investimento bilionário'
+  ],
+  geral: [
+    'tecnologia', 'tech', 'software', 'hardware', 'inovação',
+    'dados', 'blockchain', '5g', 'iot', '6g', 'web3',
+    'startup', 'fintec', 'fintech', 'edtech', 'healthtech'
+  ]
+};
 
-  // === 2. Inteligência Artificial e Automação (foco técnico) ===
-  'inteligência artificial', 'ia ', 'ai ', 'machine learning', 'deep learning',
-  'llm', 'modelo linguagem', 'chatbot', 'processamento natural', 'nlp', 'neural',
-  'openrouter api', 'n8n workflows', 'automação workflow', 'integração ai', 
-  'ia generativa', 'impacto ia', 'llm open source', 'llama modelo', 'falcon modelo',
-  'avanços llm', 'modelos codigo aberto',
+// Flatten all keywords for default filtering
+const KEYWORDS = Object.values(KEYWORDS_BY_TOPIC).flat();
 
-  // === 3. Engenharia de Hardware e IA (infraestrutura) ===
-  'nvidia', 'gpu nvidia', 'cuda', 'ampere', 'hopper', 'blackwell',
-  'gpu', 'processador', 'ia hardware', 'engenheiro hardware',
-  'especialista cibersegurança', 'data center', 'arquitetura servidores',
-  'amd ryzen', 'amd', 'intel', 'intel foundries', 'arm',
-  'asml', 'tsmc', 'chips', 'semicondutores', 'placa de vídeo',
-  'memória ram', 'ssd', 'benchmark', 'ryzen ai', 'geforce',
-  'radeon', 'baixo consumo', 'mobile ia', 'fabricação chips', 'foundries',
-
-  // === 4. Desenvolvimento e Integração (foco FullStack) ===
-  'engenheiro prompt', 'desenvolvedor integrações', 'mlops', 'fullstack developer',
-  'fullstack ia', 'react', 'typescript', 'python', 'django', 'node',
-  'javascript', 'java', 'kubernetes', 'docker', 'devops', 'api',
-  'framework', 'backend', 'frontend', 'web development', 'stack tecnológico',
-  'integração sistemas',
-
-  // === 5. Infraestrutura e Open Source ===
-  'linux', 'ubuntu', 'fedora', 'open source', 'open-source', 'kernel',
-  'diolinux', 'sistema operacional', 'distribuição linux', 'nuvem', 'cloud',
-  'aws', 'azure', 'google cloud', 'infraestrutura cloud', 'computação em nuvem',
-  'data center', 'expansão cloud', 'investimento infraestrutura',
-
-  // === 6. Venture Capital e Startups Brasil ===
-  'venture capital', 'investimento startup', 'rodada investimento', 'aporte',
-  'seed money', 'série a', 'série b', 'startup tech brasil', 'kaszek',
-  'monashees', 'bossanova', 'quantum brasil', 'starlight',
-  'm&a', 'fusões aquisições', 'startup financiamento',
-
-  // === 7. Segurança Digital ===
-  'cibersegurança', 'ransomware', 'vazamento dados', 'hack', 'segurança digital',
-  'segurança informação', 'vulnerabilidade', 'proteção dados', 'privacy',
-  'especialista cibersegurança data center',
-
-  // === 8. Investimento Público e Fomento ===
-  'bndes', 'bndes financiamento', 'finep', 'finep editais', 'govtech',
-  'mcti', 'fomento pesquisa', 'edital inovação', 'investimento público',
-  'financiamento inovação', 'banco desenvolvimento', 'investimento bilionário',
-
-  // === 9. Geral Tech (catchall) ===
-  'tecnologia', 'tech', 'software', 'hardware', 'inovação',
-  'dados', 'blockchain', '5g', 'iot', '6g', 'web3',
-  'startup', 'fintec', 'fintech', 'edtech', 'healthtech'
-];
-
-function isRelevant(item) {
+function isRelevant(item, topicFilter = null) {
   const text = ((item.titulo || '') + ' ' + (item.resumoOriginal || '')).toLowerCase();
+  
+  if (topicFilter && KEYWORDS_BY_TOPIC[topicFilter]) {
+    return KEYWORDS_BY_TOPIC[topicFilter].some(k => text.includes(k));
+  }
+  
   return KEYWORDS.some(k => text.includes(k));
 }
 
@@ -97,6 +106,9 @@ module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ erro: 'Método não permitido' });
 
+  // Extrai filtro de tópico do request body
+  const topicFilter = req.body?.topic || null;
+  
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) {
     console.error('OPENROUTER_API_KEY não encontrada');
@@ -148,12 +160,13 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ 
         noticias: [], 
         aviso: 'Nenhum feed disponível no momento',
-        geradoEm: new Date().toISOString()
+        geradoEm: new Date().toISOString(),
+        topicFilter: topicFilter || 'todos'
       });
     }
 
     // Filtra por relevância
-    const relevantes = todosItens.filter(isRelevant).slice(0, 20);
+    const relevantes = todosItens.filter(item => isRelevant(item, topicFilter)).slice(0, 20);
     const candidatos = relevantes.length > 0 ? relevantes : todosItens.slice(0, 20);
 
     console.log(`[NOTICIAS] Candidatos para IA: ${candidatos.length}`);
@@ -219,6 +232,7 @@ Retorne SOMENTE o array JSON. Sem texto, sem markdown, sem crases.`
         geradoEm: new Date().toISOString(),
         totalFontes: feedsOk,
         totalItensAnalisados: candidatos.length,
+        topicFilter: topicFilter || 'todos',
         aviso: 'Resultados sem curação por IA (fallback)'
       });
     }
@@ -248,6 +262,7 @@ Retorne SOMENTE o array JSON. Sem texto, sem markdown, sem crases.`
         geradoEm: new Date().toISOString(),
         totalFontes: feedsOk,
         totalItensAnalisados: candidatos.length,
+        topicFilter: topicFilter || 'todos',
         aviso: 'Resultados sem curação por IA (fallback - parse error)'
       });
     }
@@ -273,6 +288,7 @@ Retorne SOMENTE o array JSON. Sem texto, sem markdown, sem crases.`
         geradoEm: new Date().toISOString(),
         totalFontes: feedsOk,
         totalItensAnalisados: candidatos.length,
+        topicFilter: topicFilter || 'todos',
         aviso: 'Resultados sem curação por IA (fallback - JSON error)'
       });
     }
@@ -292,7 +308,8 @@ Retorne SOMENTE o array JSON. Sem texto, sem markdown, sem crases.`
       noticias,
       geradoEm: new Date().toISOString(),
       totalFontes: feedsOk,
-      totalItensAnalisados: candidatos.length
+      totalItensAnalisados: candidatos.length,
+      topicFilter: topicFilter || 'todos'
     };
 
     return res.status(200).json(resultado);
