@@ -272,34 +272,34 @@ export default function App() {
       `}</style>
 
       <div className="dark min-h-screen bg-[#0a0a0c] text-on-surface selection:bg-primary-container selection:text-on-primary-container flex">
-        {/* SIDEBAR LATERAL ESQUERDO */}
-        <aside className="fixed left-0 top-0 w-72 h-screen bg-[#0a0a0c] border-r border-white/10 flex flex-col pt-24 px-6 gap-8">
+        {/* SIDEBAR LATERAL ESQUERDO - RESPONSIVO */}
+        <aside className="hidden md:flex fixed left-0 top-0 md:w-56 lg:w-72 h-screen bg-[#0a0a0c] flex-col pt-24 px-4 md:px-6 gap-8">
           <div className="flex flex-col gap-4">
             {Object.entries(TOPICS).map(([key, topic]) => (
               <button
                 key={key}
                 onClick={() => goToTab(key)}
-                className="flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-left"
+                className="flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-left whitespace-nowrap"
                 style={{
                   backgroundColor: currentView === key ? "rgba(196, 192, 255, 0.15)" : "transparent",
                   borderLeft: currentView === key ? "3px solid #c4c0ff" : "3px solid transparent",
                   color: currentView === key ? "#c4c0ff" : "rgba(200, 198, 216, 1)",
                 }}
               >
-                <span className="material-symbols-outlined text-lg">{topic.icon}</span>
-                <span className="font-['Space_Grotesk'] uppercase tracking-widest text-sm font-bold">{topic.label}</span>
+                <span className="material-symbols-outlined text-lg flex-shrink-0">{topic.icon}</span>
+                <span className="font-['Space_Grotesk'] uppercase tracking-widest text-xs md:text-sm font-bold">{topic.label}</span>
               </button>
             ))}
           </div>
         </aside>
 
         {/* MAIN CONTENT */}
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col md:pl-56 lg:pl-72">
           {/* TOP HEADER */}
-          <header className="fixed top-0 right-0 left-72 z-50 flex justify-between items-center px-6 py-4 bg-[#0a0a0c]/80 backdrop-blur-md border-b border-white/10">
+          <header className="fixed top-0 right-0 md:left-56 lg:left-0 z-50 flex justify-between items-center px-4 md:px-6 py-4 bg-[#0a0a0c]/80 backdrop-blur-md border-b border-white/10">
             <button 
               onClick={goToHome}
-              className="text-xl font-black tracking-tighter text-[#7c73ff] hover:opacity-80 transition-opacity cursor-pointer" 
+              className="text-lg md:text-xl font-black tracking-tighter text-[#7c73ff] hover:opacity-80 transition-opacity cursor-pointer" 
               style={{ fontFamily: "'Space Grotesk', sans-serif" }}
             >
               TECH NEWS AGENT
@@ -308,21 +308,69 @@ export default function App() {
             {/* Header Info - Aparece quando não está em HOME */}
             {!isHome && (
               <div className="text-right">
-                <div className="font-headline-xl text-headline-xl tracking-tighter leading-none">
+                <div className="text-lg md:text-2xl font-bold tracking-tighter leading-none">
                   {hora.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
                 </div>
-                <div className="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest">
+                <div className="text-xs md:text-sm text-on-surface-variant uppercase tracking-widest">
                   {hora.toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "short" })}
                 </div>
               </div>
             )}
             
-            <button className="material-symbols-outlined text-gray-400 cursor-pointer hover:bg-white/5 p-2 rounded-lg transition-all">person</button>
+            <button className="material-symbols-outlined text-gray-400 cursor-pointer hover:bg-white/5 p-2 rounded-lg transition-all flex-shrink-0">person</button>
           </header>
 
           {/* MAIN CONTENT AREA */}
-          <main className="flex-1 overflow-y-auto pt-24 pb-32 px-8">
+          <main className="flex-1 overflow-y-auto pt-24 pb-32 px-4 md:px-8">
             <div className="max-w-4xl mx-auto flex flex-col gap-8">
+              
+              {/* Salvos View - Aparece primeiro quando selecionado */}
+              {currentView === "salvos" && (
+                <section className="flex flex-col gap-4">
+                  <div className="flex justify-between items-center">
+                    <h3 className="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest">
+                      {noticiasSalvas.length} notícia{noticiasSalvas.length !== 1 ? "s" : ""} salva{noticiasSalvas.length !== 1 ? "s" : ""}
+                    </h3>
+                    {noticiasSalvas.length > 0 && (
+                      <button
+                        onClick={() => {
+                          setNoticiasSalvas([]);
+                          localStorage.removeItem('noticias_salvas');
+                          addLog("✓ Todos os salvos foram removidos");
+                        }}
+                        className="px-4 py-2 text-sm font-bold rounded-lg transition-all"
+                        style={{
+                          color: "rgba(255,77,109,0.9)",
+                          backgroundColor: "rgba(255,77,109,0.1)",
+                          border: "1px solid rgba(255,77,109,0.2)"
+                        }}
+                      >
+                        Limpar tudo
+                      </button>
+                    )}
+                  </div>
+
+                  {noticiasSalvas.length === 0 ? (
+                    <div className="text-center py-12">
+                      <p className="text-on-surface-variant">Nenhuma notícia salva ainda</p>
+                    </div>
+                  ) : (
+                    noticiasSalvas.map((n, i) => (
+                      <div key={i} onClick={() => setExpandedIndex(expandedIndex === `salvo_${i}` ? null : `salvo_${i}`)}>
+                        <NewsCard
+                          noticia={n}
+                          index={i}
+                          expanded={expandedIndex === `salvo_${i}`}
+                          onExpand={() => {}}
+                          onSave={() => salvarNoticia(i, true)}
+                          isSaved={true}
+                          showBookmark={true}
+                        />
+                      </div>
+                    ))
+                  )}
+                </section>
+              )}
               
               {/* Header Info - Só em HOME */}
               {isHome && (
@@ -350,7 +398,7 @@ export default function App() {
                       <button
                         key={key}
                         onClick={() => goToTab(key)}
-                        className="px-6 py-3 rounded-full border border-outline-variant hover:border-primary transition-colors text-label-caps uppercase font-bold"
+                        className="px-6 py-3 rounded-full border border-outline-variant hover:border-primary transition-colors text-label-caps uppercase font-bold text-xs md:text-sm"
                         style={{
                           backgroundColor: "rgb(31, 31, 39)",
                           borderColor: "#47454f",
@@ -369,14 +417,14 @@ export default function App() {
                 <button
                   onClick={buscarNoticias}
                   disabled={loading}
-                  className="flex-1 py-4 bg-primary text-on-primary font-headline-md text-headline-md rounded-xl hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                  className="flex-1 py-4 bg-primary text-on-primary font-headline-md text-headline-md rounded-xl hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 text-sm md:text-base"
                 >
                   <span className="material-symbols-outlined">add</span>
                   {loading ? "Buscando..." : "+ Atualizar Notícias"}
                 </button>
                 <button
                   onClick={goToSalvos}
-                  className="flex-1 py-4 border border-outline text-on-surface font-headline-md text-headline-md rounded-xl hover:bg-white/5 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                  className="flex-1 py-4 border border-outline text-on-surface font-headline-md text-headline-md rounded-xl hover:bg-white/5 active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-sm md:text-base"
                 >
                   <span className="material-symbols-outlined">bookmark</span>
                   Ver salvas
@@ -423,54 +471,6 @@ export default function App() {
                       />
                     </div>
                   ))}
-                </section>
-              )}
-
-              {/* Salvos View */}
-              {currentView === "salvos" && (
-                <section className="flex flex-col gap-4">
-                  <div className="flex justify-between items-center">
-                    <h3 className="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest">
-                      {noticiasSalvas.length} notícia{noticiasSalvas.length !== 1 ? "s" : ""} salva{noticiasSalvas.length !== 1 ? "s" : ""}
-                    </h3>
-                    {noticiasSalvas.length > 0 && (
-                      <button
-                        onClick={() => {
-                          setNoticiasSalvas([]);
-                          localStorage.removeItem('noticias_salvas');
-                          addLog("✓ Todos os salvos foram removidos");
-                        }}
-                        className="px-4 py-2 text-sm font-bold rounded-lg transition-all"
-                        style={{
-                          color: "rgba(255,77,109,0.9)",
-                          backgroundColor: "rgba(255,77,109,0.1)",
-                          border: "1px solid rgba(255,77,109,0.2)"
-                        }}
-                      >
-                        Limpar tudo
-                      </button>
-                    )}
-                  </div>
-
-                  {noticiasSalvas.length === 0 ? (
-                    <div className="text-center py-12">
-                      <p className="text-on-surface-variant">Nenhuma notícia salva ainda</p>
-                    </div>
-                  ) : (
-                    noticiasSalvas.map((n, i) => (
-                      <div key={i} onClick={() => setExpandedIndex(expandedIndex === `salvo_${i}` ? null : `salvo_${i}`)}>
-                        <NewsCard
-                          noticia={n}
-                          index={i}
-                          expanded={expandedIndex === `salvo_${i}`}
-                          onExpand={() => {}}
-                          onSave={() => salvarNoticia(i, true)}
-                          isSaved={true}
-                          showBookmark={true}
-                        />
-                      </div>
-                    ))
-                  )}
                 </section>
               )}
             </div>
