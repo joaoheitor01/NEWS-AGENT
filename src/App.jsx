@@ -88,10 +88,9 @@ export default function App() {
   const [fetched, setFetched] = useState(false);
   const [selectedTab, setSelectedTab] = useState("ia");
   const [noticiasSalvas, setNoticiasSalvas] = useState([]);
-  const [currentView, setCurrentView] = useState("home"); // "home", "ia", "hardware", "cyber", "chips", "web3", "salvos"
+  const [currentView, setCurrentView] = useState("home");
   const logRef = useRef(null);
 
-  // Carrega notícias salvas do localStorage ao montar
   useEffect(() => {
     const salvasData = localStorage.getItem('noticias_salvas');
     if (salvasData) {
@@ -104,20 +103,17 @@ export default function App() {
     }
   }, []);
 
-  // Atualiza hora a cada segundo
   useEffect(() => {
     const timer = setInterval(() => setHora(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  // Auto-scroll do log
   useEffect(() => {
     if (logRef.current) {
       logRef.current.scrollTop = logRef.current.scrollHeight;
     }
   }, [log]);
 
-  // Filtra notícias baseado na aba selecionada (só em abas, não em home)
   useEffect(() => {
     if (noticiasOriginais.length > 0 && currentView !== "home") {
       const topicKeywords = {
@@ -137,7 +133,6 @@ export default function App() {
       setNoticias(noticiasFiltradasPorTab.length > 0 ? noticiasFiltradasPorTab : noticiasOriginais);
       setExpandedIndex(null);
     } else if (currentView === "home" && noticiasOriginais.length > 0) {
-      // Em home, mostra todas as notícias sem filtrar
       setNoticias(noticiasOriginais);
       setExpandedIndex(null);
     }
@@ -181,7 +176,6 @@ export default function App() {
     addLog("▶ filtering noise: 12.4k raw inputs processed");
     
     try {
-      // Se está em home, busca notícias gerais (null), senão busca por tópico
       const topicToSearch = currentView === "home" ? null : selectedTab;
       
       const response = await fetch("/api/noticias", {
@@ -212,7 +206,6 @@ export default function App() {
         return;
       }
 
-      // Adiciona imagens e ícones às notícias
       const noticiasComImagens = noticiasRecebidas.map((n, idx) => {
         const imagens = [
           "https://lh3.googleusercontent.com/aida-public/AB6AXuCFuDq1X-GIPf2koag6UEw-rSu0EOuoUfE6i9TIRWbN4HlElaAL7OUq4rVfXbL5jR0cQDyeMhwkuB5OsGZ-9sCt2NQpAr4NEXHXd0Qp-Zr5f9DxypXDO9KbiTVXGRlTdXPTfmksfRKloZthSRPo1jrHM3oOLPxIu8ezzYmkXy9QWfNZ5WZJnb1wF-0t2SFa7gE9QdoEEe46GQyW2JucEEL-W0PvYhVQDvXsULgh1u52dvkbMAAbUyWBgTW07mgI18mkX9OXKIt6hMo",
@@ -278,10 +271,32 @@ export default function App() {
         }
       `}</style>
 
-      <div className="dark min-h-screen bg-[#0a0a0c] text-on-surface selection:bg-primary-container selection:text-on-primary-container">
-        {/* Top Navigation Bar - Tabs */}
-        <header className="fixed top-0 w-full z-50 flex justify-between items-center px-6 py-4 bg-[#0a0a0c]/80 backdrop-blur-md border-b border-white/10">
-          <div className="flex items-center gap-8">
+      <div className="dark min-h-screen bg-[#0a0a0c] text-on-surface selection:bg-primary-container selection:text-on-primary-container flex">
+        {/* SIDEBAR LATERAL ESQUERDO */}
+        <aside className="fixed left-0 top-0 w-72 h-screen bg-[#0a0a0c] border-r border-white/10 flex flex-col pt-24 px-6 gap-8">
+          <div className="flex flex-col gap-4">
+            {Object.entries(TOPICS).map(([key, topic]) => (
+              <button
+                key={key}
+                onClick={() => goToTab(key)}
+                className="flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-left"
+                style={{
+                  backgroundColor: currentView === key ? "rgba(196, 192, 255, 0.15)" : "transparent",
+                  borderLeft: currentView === key ? "3px solid #c4c0ff" : "3px solid transparent",
+                  color: currentView === key ? "#c4c0ff" : "rgba(200, 198, 216, 1)",
+                }}
+              >
+                <span className="material-symbols-outlined text-lg">{topic.icon}</span>
+                <span className="font-['Space_Grotesk'] uppercase tracking-widest text-sm font-bold">{topic.label}</span>
+              </button>
+            ))}
+          </div>
+        </aside>
+
+        {/* MAIN CONTENT */}
+        <div className="flex-1 flex flex-col">
+          {/* TOP HEADER */}
+          <header className="fixed top-0 right-0 left-72 z-50 flex justify-between items-center px-6 py-4 bg-[#0a0a0c]/80 backdrop-blur-md border-b border-white/10">
             <button 
               onClick={goToHome}
               className="text-xl font-black tracking-tighter text-[#7c73ff] hover:opacity-80 transition-opacity cursor-pointer" 
@@ -289,36 +304,9 @@ export default function App() {
             >
               TECH NEWS AGENT
             </button>
-            <div className="hidden md:flex gap-6 items-center">
-              {Object.entries(TOPICS).map(([key, topic]) => (
-                <button
-                  key={key}
-                  onClick={() => goToTab(key)}
-                  className="font-['Space_Grotesk'] uppercase tracking-widest text-xs font-bold transition-colors pb-1"
-                  style={{
-                    color: currentView === key ? "#7c73ff" : "#9ca3af",
-                    borderBottom: currentView === key ? "2px solid #7c73ff" : "none",
-                  }}
-                >
-                  {topic.label}
-                </button>
-              ))}
-            </div>
-          </div>
-          <button className="material-symbols-outlined text-gray-400 cursor-pointer hover:bg-white/5 p-2 rounded-lg transition-all">person</button>
-        </header>
-
-        {/* Main Content */}
-        <main className="max-w-4xl mx-auto px-6 pt-32 pb-32 flex flex-col gap-8">
-          {/* Header Info - Only on Home */}
-          {isHome && (
-            <section className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
-              <div>
-                <h2 className="font-headline-lg text-headline-lg text-primary">TECH NEWS AGENT</h2>
-                <p className="font-body-md text-body-md text-on-surface-variant mt-2" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                  {greeting}, João Heitor
-                </p>
-              </div>
+            
+            {/* Header Info - Aparece quando não está em HOME */}
+            {!isHome && (
               <div className="text-right">
                 <div className="font-headline-xl text-headline-xl tracking-tighter leading-none">
                   {hora.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
@@ -327,99 +315,55 @@ export default function App() {
                   {hora.toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "short" })}
                 </div>
               </div>
-            </section>
-          )}
+            )}
+            
+            <button className="material-symbols-outlined text-gray-400 cursor-pointer hover:bg-white/5 p-2 rounded-lg transition-all">person</button>
+          </header>
 
-          {/* Home View */}
-          {isHome && (
-            <>
-              {/* Topic Buttons (Static Filters) */}
-              <nav className="flex flex-wrap justify-center gap-3">
-                {Object.entries(TOPICS).map(([key, topic]) => (
-                  <button
-                    key={key}
-                    onClick={() => goToTab(key)}
-                    className="px-6 py-3 rounded-full border border-outline-variant hover:border-primary transition-colors text-label-caps uppercase font-bold"
-                    style={{
-                      backgroundColor: "rgb(31, 31, 39)",
-                      borderColor: "#47454f",
-                      color: "rgba(200, 198, 216, 1)",
-                    }}
-                  >
-                    {topic.shortLabel}
-                  </button>
-                ))}
-              </nav>
+          {/* MAIN CONTENT AREA */}
+          <main className="flex-1 overflow-y-auto pt-24 pb-32 px-8">
+            <div className="max-w-4xl mx-auto flex flex-col gap-8">
+              
+              {/* Header Info - Só em HOME */}
+              {isHome && (
+                <section className="flex flex-col gap-6">
+                  <div>
+                    <h2 className="font-headline-lg text-headline-lg text-primary mb-4">TECH NEWS AGENT</h2>
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+                      <p className="font-body-md text-body-md text-on-surface-variant" style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "20px", fontWeight: "600" }}>
+                        {greeting}, João Heitor
+                      </p>
+                      <div className="text-right">
+                        <div className="font-headline-xl text-headline-xl tracking-tighter leading-none">
+                          {hora.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                        </div>
+                        <div className="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest">
+                          {hora.toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "short" })}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
 
-              {/* Action Buttons */}
-              <div className="flex flex-col md:flex-row gap-4">
-                <button
-                  onClick={buscarNoticias}
-                  disabled={loading}
-                  className="flex-1 py-4 bg-primary text-on-primary font-headline-md text-headline-md rounded-xl hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-                >
-                  <span className="material-symbols-outlined">add</span>
-                  {loading ? "Buscando..." : "+ Atualizar Notícias"}
-                </button>
-                <button
-                  onClick={goToSalvos}
-                  className="flex-1 py-4 border border-outline text-on-surface font-headline-md text-headline-md rounded-xl hover:bg-white/5 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
-                >
-                  <span className="material-symbols-outlined">bookmark</span>
-                  Ver salvas
-                </button>
-              </div>
+                  {/* Topic Buttons - Só em HOME */}
+                  <nav className="flex flex-wrap justify-start gap-3">
+                    {Object.entries(TOPICS).map(([key, topic]) => (
+                      <button
+                        key={key}
+                        onClick={() => goToTab(key)}
+                        className="px-6 py-3 rounded-full border border-outline-variant hover:border-primary transition-colors text-label-caps uppercase font-bold"
+                        style={{
+                          backgroundColor: "rgb(31, 31, 39)",
+                          borderColor: "#47454f",
+                          color: "rgba(200, 198, 216, 1)",
+                        }}
+                      >
+                        {topic.shortLabel}
+                      </button>
+                    ))}
+                  </nav>
+                </section>
+              )}
 
-              {/* Terminal Box */}
-              <div className="bg-[#0e0d15] rounded-xl border border-white/5 shadow-inner px-6 py-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                  <span className="font-label-caps text-[10px] text-green-500/70 tracking-widest uppercase">Live Agent Stream</span>
-                </div>
-                <div ref={logRef} className="font-mono text-sm text-green-400/90 leading-relaxed max-h-40 overflow-y-auto">
-                  {log.length === 0 ? (
-                    <>
-                      <p>&gt; initializing neural news crawler...</p>
-                      <p>&gt; scanning 42 sub-sectors for alpha signals</p>
-                      <p>&gt; filtering noise: 12.4k raw inputs processed</p>
-                      <p className="animate-pulse">&gt; waiting for manual trigger...</p>
-                    </>
-                  ) : (
-                    log.map((l) => (
-                      <p key={l.id}>&gt; {l.msg}</p>
-                    ))
-                  )}
-                  {loading && <p className="animate-pulse">&gt; processing...</p>}
-                </div>
-              </div>
-
-              {/* Image Cards (System Health & Market Sentiment) */}
-              <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-surface-container-high/40 border border-white/5 rounded-xl p-6 flex flex-col gap-2">
-                  <img 
-                    className="w-full h-32 object-cover rounded-lg mb-2 opacity-60"
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuCFuDq1X-GIPf2koag6UEw-rSu0EOuoUfE6i9TIRWbN4HlElaAL7OUq4rVfXbL5jR0cQDyeMhwkuB5OsGZ-9sCt2NQpAr4NEXHXd0Qp-Zr5f9DxypXDO9KbiTVXGRlTdXPTfmksfRKloZthSRPo1jrHM3oOLPxIu8ezzYmkXy9QWfNZ5WZJnb1wF-0t2SFa7gE9QdoEEe46GQyW2JucEEL-W0PvYhVQDvXsULgh1u52dvkbMAAbUyWBgTW07mgI18mkX9OXKIt6hMo"
-                    alt="System Health"
-                  />
-                  <h5 className="font-headline-md text-headline-md text-primary">System Health</h5>
-                  <p className="font-body-sm text-body-sm text-on-surface-variant">Active scrapers: 142. Proxy latency: 24ms. Signal-to-noise ratio: Optimal.</p>
-                </div>
-                <div className="bg-surface-container-high/40 border border-white/5 rounded-xl p-6 flex flex-col gap-2">
-                  <img 
-                    className="w-full h-32 object-cover rounded-lg mb-2 opacity-60"
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuCoedg2Yz4aoDJpEQGYyKAZZ--AnE5HscRpovlT6ctAuCWZuTesvt_ctvNO1rEO7a0zGnZXvBRkvHp7EkJU8YU5uRcFSAfsF8VA9_qSQjV213rb66nftM1495ibkCUg6am0THv3AmqYWftxPpmHojgB4tSP79hb8je550hNoV51e4jVKzjSERjHrbKy-AxctOQZDkhHeXOlFtK0B3HU1zlYziQN-aUD2JW9kYQk6WfzaAG0Nxystea1YJLOQ30Dg1ZS_v0dw0KLcHo"
-                    alt="Market Sentiment"
-                  />
-                  <h5 className="font-headline-md text-headline-md text-tertiary">Market Sentiment</h5>
-                  <p className="font-body-sm text-body-sm text-on-surface-variant">AI sector bullish (+4.2%). Crypto sideways. Hardware supply chains stabilizing.</p>
-                </div>
-              </section>
-            </>
-          )}
-
-          {/* Tab Views */}
-          {!isHome && (
-            <>
               {/* Action Buttons */}
               <div className="flex flex-col md:flex-row gap-4">
                 <button
@@ -481,77 +425,57 @@ export default function App() {
                   ))}
                 </section>
               )}
-            </>
-          )}
 
-          {/* Salvos View */}
-          {currentView === "salvos" && (
-            <section className="flex flex-col gap-4">
-              <div className="flex justify-between items-center">
-                <h3 className="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest">
-                  {noticiasSalvas.length} notícia{noticiasSalvas.length !== 1 ? "s" : ""} salva{noticiasSalvas.length !== 1 ? "s" : ""}
-                </h3>
-                {noticiasSalvas.length > 0 && (
-                  <button
-                    onClick={() => {
-                      setNoticiasSalvas([]);
-                      localStorage.removeItem('noticias_salvas');
-                      addLog("✓ Todos os salvos foram removidos");
-                    }}
-                    className="px-4 py-2 text-sm font-bold rounded-lg transition-all"
-                    style={{
-                      color: "rgba(255,77,109,0.9)",
-                      backgroundColor: "rgba(255,77,109,0.1)",
-                      border: "1px solid rgba(255,77,109,0.2)"
-                    }}
-                  >
-                    Limpar tudo
-                  </button>
-                )}
-              </div>
-
-              {noticiasSalvas.length === 0 ? (
-                <div className="text-center py-12">
-                  <p className="text-on-surface-variant">Nenhuma notícia salva ainda</p>
-                </div>
-              ) : (
-                noticiasSalvas.map((n, i) => (
-                  <div key={i} onClick={() => setExpandedIndex(expandedIndex === `salvo_${i}` ? null : `salvo_${i}`)}>
-                    <NewsCard
-                      noticia={n}
-                      index={i}
-                      expanded={expandedIndex === `salvo_${i}`}
-                      onExpand={() => {}}
-                      onSave={() => salvarNoticia(i, true)}
-                      isSaved={true}
-                      showBookmark={true}
-                    />
+              {/* Salvos View */}
+              {currentView === "salvos" && (
+                <section className="flex flex-col gap-4">
+                  <div className="flex justify-between items-center">
+                    <h3 className="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest">
+                      {noticiasSalvas.length} notícia{noticiasSalvas.length !== 1 ? "s" : ""} salva{noticiasSalvas.length !== 1 ? "s" : ""}
+                    </h3>
+                    {noticiasSalvas.length > 0 && (
+                      <button
+                        onClick={() => {
+                          setNoticiasSalvas([]);
+                          localStorage.removeItem('noticias_salvas');
+                          addLog("✓ Todos os salvos foram removidos");
+                        }}
+                        className="px-4 py-2 text-sm font-bold rounded-lg transition-all"
+                        style={{
+                          color: "rgba(255,77,109,0.9)",
+                          backgroundColor: "rgba(255,77,109,0.1)",
+                          border: "1px solid rgba(255,77,109,0.2)"
+                        }}
+                      >
+                        Limpar tudo
+                      </button>
+                    )}
                   </div>
-                ))
-              )}
-            </section>
-          )}
-        </main>
 
-        {/* Bottom Navigation (Mobile) */}
-        <nav className="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-16 px-4 bg-[#0a0a0c]/90 backdrop-blur-lg border-t border-white/10">
-          <button onClick={goToHome} className="flex flex-col items-center justify-center text-[#7c73ff] bg-white/5 rounded-xl px-3 py-1">
-            <span className="material-symbols-outlined" data-weight="fill">sensors</span>
-            <span className="font-['Space_Grotesk'] text-[10px] font-medium">Home</span>
-          </button>
-          <a href="#" className="flex flex-col items-center justify-center text-gray-500 hover:text-white transition-transform active:scale-95">
-            <span className="material-symbols-outlined">trending_up</span>
-            <span className="font-['Space_Grotesk'] text-[10px] font-medium">Trends</span>
-          </a>
-          <a href="#" className="flex flex-col items-center justify-center text-gray-500 hover:text-white transition-transform active:scale-95">
-            <span className="material-symbols-outlined">code</span>
-            <span className="font-['Space_Grotesk'] text-[10px] font-medium">Terminal</span>
-          </a>
-          <a href="#" className="flex flex-col items-center justify-center text-gray-500 hover:text-white transition-transform active:scale-95">
-            <span className="material-symbols-outlined">person</span>
-            <span className="font-['Space_Grotesk'] text-[10px] font-medium">Account</span>
-          </a>
-        </nav>
+                  {noticiasSalvas.length === 0 ? (
+                    <div className="text-center py-12">
+                      <p className="text-on-surface-variant">Nenhuma notícia salva ainda</p>
+                    </div>
+                  ) : (
+                    noticiasSalvas.map((n, i) => (
+                      <div key={i} onClick={() => setExpandedIndex(expandedIndex === `salvo_${i}` ? null : `salvo_${i}`)}>
+                        <NewsCard
+                          noticia={n}
+                          index={i}
+                          expanded={expandedIndex === `salvo_${i}`}
+                          onExpand={() => {}}
+                          onSave={() => salvarNoticia(i, true)}
+                          isSaved={true}
+                          showBookmark={true}
+                        />
+                      </div>
+                    ))
+                  )}
+                </section>
+              )}
+            </div>
+          </main>
+        </div>
       </div>
     </>
   );
