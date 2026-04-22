@@ -315,6 +315,9 @@ export default function NewsAgent() {
       }
     }
   }, []);
+
+  // Verifica cache ao montar o componente
+  useEffect(() => {
     const cacheData = localStorage.getItem('noticias_cache');
     const cacheTs = localStorage.getItem('noticias_cache_ts');
     
