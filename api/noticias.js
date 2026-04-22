@@ -33,21 +33,39 @@ module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ erro: 'Método não permitido' });
 
   const apiKey = process.env.OPENROUTER_API_KEY;
-  if (!apiKey) return res.status(500).json({ erro: 'OPENROUTER_API_KEY não configurada' });
+  if (!apiKey) {
+    console.error('OPENROUTER_API_KEY não encontrada');
+    return res.status(500).json({ erro: 'API Key não configurada' });
+  }
 
   try {
-    const parser = new Parser({ timeout: 8000 });
+    console.log('[NOTICIAS] Iniciando busca de feeds...');
+    
+    const parser = new Parser({ timeout: 12000 });
 
     // Coleta itens de todos os feeds em paralelo (com fallback por feed)
     const feedResults = await Promise.allSettled(
-      FEEDS.map(f => parser.parseURL(f.url).then(feed => ({ feed, fonte: f.nome })))
+      FEEDS.map(f => 
+        parser.parseURL(f.url)
+          .then(feed => {
+            console.log(`[NOTICIAS] Feed "${f.nome}" OK: ${feed.items.length} itens`);
+            return { feed, fonte: f.nome };
+          })
+          .catch(err => {
+            console.error(`[NOTICIAS] Erro ao buscar "${f.nome}": ${err.message}`);
+            throw err;
+          })
+      )
     );
 
     const todosItens = [];
+    let feedsOk = 0;
+
     for (const result of feedResults) {
       if (result.status === 'fulfilled') {
+        feedsOk++;
         const { feed, fonte } = result.value;
-        const itens = feed.items.slice(0, 10).map(item => ({
+        const itens = (feed.items || []).slice(0, 10).map(item => ({
           titulo: item.title || '',
           link: item.link || '',
           resumoOriginal: item.contentSnippet || item.summary || '',
@@ -58,15 +76,26 @@ module.exports = async function handler(req, res) {
       }
     }
 
+    console.log(`[NOTICIAS] Feeds processados: ${feedsOk}/${FEEDS.length}, Total de itens: ${todosItens.length}`);
+
     if (todosItens.length === 0) {
-      return res.status(200).json({ noticias: [], aviso: 'Nenhum feed disponível no momento' });
+      console.warn('[NOTICIAS] Nenhum item obtido dos feeds');
+      return res.status(200).json({ 
+        noticias: [], 
+        aviso: 'Nenhum feed disponível no momento',
+        geradoEm: new Date().toISOString()
+      });
     }
 
     // Filtra por relevância
     const relevantes = todosItens.filter(isRelevant).slice(0, 20);
     const candidatos = relevantes.length > 0 ? relevantes : todosItens.slice(0, 20);
 
+    console.log(`[NOTICIAS] Candidatos para IA: ${candidatos.length}`);
+
     // Chama IA para selecionar e resumir as 5 melhores
+    console.log('[NOTICIAS] Chamando OpenRouter...');
+    
     const aiResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -78,6 +107,7 @@ module.exports = async function handler(req, res) {
       body: JSON.stringify({
         model: 'google/gemini-2.0-flash:free',
         max_tokens: 1500,
+        temperature: 0.3,
         messages: [{
           role: 'user',
           content: `Você é um curador de notícias tech. Analise esta lista e selecione as 5 notícias MAIS IMPORTANTES sobre IA, tecnologia, Google, Microsoft, Anthropic, OpenAI, GitHub, Meta, Apple.
@@ -100,34 +130,106 @@ Retorne SOMENTE o array JSON. Sem texto, sem markdown, sem crases.`
 
     if (!aiResponse.ok) {
       const errText = await aiResponse.text();
-      console.error('OpenRouter erro:', aiResponse.status, errText);
-      return res.status(502).json({ erro: `OpenRouter retornou ${aiResponse.status}`, detalhe: errText });
+      console.error(`[NOTICIAS] OpenRouter erro ${aiResponse.status}:`, errText.substring(0, 500));
+      
+      // Fallback: retorna os candidatos sem curação da IA
+      const fallbackNoticias = candidatos.slice(0, 5).map(item => ({
+        titulo: item.titulo,
+        resumo: item.resumoOriginal.substring(0, 200),
+        fonte: item.fonte,
+        link: item.link,
+        empresa: 'Tech',
+        impacto: 'médio'
+      }));
+
+      return res.status(200).json({
+        noticias: fallbackNoticias,
+        geradoEm: new Date().toISOString(),
+        totalFontes: feedsOk,
+        totalItensAnalisados: candidatos.length,
+        aviso: 'Resultados sem curação por IA (fallback)'
+      });
     }
 
     const aiData = await aiResponse.json();
     const textoBruto = aiData?.choices?.[0]?.message?.content || '';
 
+    console.log('[NOTICIAS] Resposta IA recebida, parseando...');
+
     // Parse robusto — aceita array direto ou dentro de objeto
     const matchArray = textoBruto.match(/\[[\s\S]*\]/);
     if (!matchArray) {
-      console.error('IA não retornou array JSON. Resposta:', textoBruto);
-      return res.status(500).json({ erro: 'IA não retornou formato esperado', raw: textoBruto });
+      console.error('[NOTICIAS] Erro ao parsear JSON. Resposta bruta:', textoBruto.substring(0, 500));
+      
+      // Fallback novamente
+      const fallbackNoticias = candidatos.slice(0, 5).map(item => ({
+        titulo: item.titulo,
+        resumo: item.resumoOriginal.substring(0, 200),
+        fonte: item.fonte,
+        link: item.link,
+        empresa: 'Tech',
+        impacto: 'médio'
+      }));
+
+      return res.status(200).json({
+        noticias: fallbackNoticias,
+        geradoEm: new Date().toISOString(),
+        totalFontes: feedsOk,
+        totalItensAnalisados: candidatos.length,
+        aviso: 'Resultados sem curação por IA (fallback - parse error)'
+      });
     }
 
-    const noticias = JSON.parse(matchArray[0]);
+    let noticias;
+    try {
+      noticias = JSON.parse(matchArray[0]);
+    } catch (parseErr) {
+      console.error('[NOTICIAS] JSON.parse falhou:', parseErr.message);
+      
+      // Fallback final
+      const fallbackNoticias = candidatos.slice(0, 5).map(item => ({
+        titulo: item.titulo,
+        resumo: item.resumoOriginal.substring(0, 200),
+        fonte: item.fonte,
+        link: item.link,
+        empresa: 'Tech',
+        impacto: 'médio'
+      }));
+
+      return res.status(200).json({
+        noticias: fallbackNoticias,
+        geradoEm: new Date().toISOString(),
+        totalFontes: feedsOk,
+        totalItensAnalisados: candidatos.length,
+        aviso: 'Resultados sem curação por IA (fallback - JSON error)'
+      });
+    }
+
+    // Garante que é um array
+    if (!Array.isArray(noticias)) {
+      noticias = [noticias];
+    }
+
+    // Garante máximo de 5
+    noticias = noticias.slice(0, 5);
+
+    console.log(`[NOTICIAS] Sucesso! ${noticias.length} notícias retornadas`);
 
     // Timestamp da busca
     const resultado = {
       noticias,
       geradoEm: new Date().toISOString(),
-      totalFontes: FEEDS.length,
+      totalFontes: feedsOk,
       totalItensAnalisados: candidatos.length
     };
 
     return res.status(200).json(resultado);
 
   } catch (error) {
-    console.error('Erro crítico:', error);
-    return res.status(500).json({ erro: 'Erro interno', detalhe: error.message });
+    console.error('[NOTICIAS] Erro crítico:', error.message, error.stack);
+    return res.status(500).json({ 
+      erro: 'Erro interno no servidor',
+      detalhe: error.message 
+    });
   }
 };
