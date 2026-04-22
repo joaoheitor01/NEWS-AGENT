@@ -222,7 +222,34 @@ export default function NewsAgent() {
   const [log, setLog] = useState([]);
   const [hora, setHora] = useState(new Date());
   const [fetched, setFetched] = useState(false);
+  const [cacheMoment, setCacheMoment] = useState(null);
+  const [usandoCache, setUsandoCache] = useState(false);
   const logRef = useRef(null);
+
+  // Verifica cache ao montar o componente
+  useEffect(() => {
+    const cacheData = localStorage.getItem('noticias_cache');
+    const cacheTs = localStorage.getItem('noticias_cache_ts');
+    
+    if (cacheData && cacheTs) {
+      const cachedTime = new Date(cacheTs);
+      const agora = new Date();
+      const horasPassadas = (agora - cachedTime) / (1000 * 60 * 60);
+      
+      // Se cache tem menos de 8 horas, usa automaticamente
+      if (horasPassadas < 8) {
+        try {
+          const noticias = JSON.parse(cacheData);
+          setNoticias(noticias);
+          setCacheMoment(cachedTime);
+          setFetched(true);
+          addLog(`[CACHE] Notícias carregadas do histórico`, "info");
+        } catch (e) {
+          console.error('Erro ao parsear cache:', e);
+        }
+      }
+    }
+  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => setHora(new Date()), 1000);
@@ -249,15 +276,13 @@ export default function NewsAgent() {
     ]);
   };
 
-  const buscarNoticia = async (topico, index) => {
-    addLog(`[${index + 1}/${5}] Pesquisando: "${topico}"`, "system");
-
+  const buscarNoticias = async () => {
     try {
-      // GIDEON UPDATE: Chamando a rota interna gratuita da Vercel
+      addLog("▶ Buscando notícias da IA...", "system");
       const response = await fetch("/api/noticias", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topico }),
+        body: JSON.stringify({}),
       });
 
       if (!response.ok) {
@@ -271,11 +296,43 @@ export default function NewsAgent() {
         return null;
       }
 
-      addLog(`✓ "${data.titulo.substring(0, 50)}..."`, "success");
-      return data;
+      const { noticias: noticiasRecebidas } = data;
+      
+      if (!noticiasRecebidas || noticiasRecebidas.length === 0) {
+        addLog(`✗ Nenhuma notícia retornada`, "warn");
+        return null;
+      }
+
+      // Salva no localStorage
+      localStorage.setItem('noticias_cache', JSON.stringify(noticiasRecebidas));
+      localStorage.setItem('noticias_cache_ts', new Date().toISOString());
+
+      addLog(`✓ ${noticiasRecebidas.length} notícias carregadas e salvas`, "success");
+      return noticiasRecebidas;
     } catch (err) {
-      addLog(`✗ Erro ao buscar "${topico}": ${err.message}`, "error");
+      addLog(`✗ Erro ao buscar notícias: ${err.message}`, "error");
       return null;
+    }
+  };
+
+  const carregarDosalvadas = () => {
+    const cacheData = localStorage.getItem('noticias_cache');
+    const cacheTs = localStorage.getItem('noticias_cache_ts');
+    
+    if (!cacheData || !cacheTs) {
+      addLog(`✗ Nenhuma notícia salva encontrada`, "warn");
+      return;
+    }
+
+    try {
+      const noticiasRecuperadas = JSON.parse(cacheData);
+      setNoticias(noticiasRecuperadas);
+      setCacheMoment(new Date(cacheTs));
+      setUsandoCache(true);
+      setFetched(true);
+      addLog(`✓ Notícias salvas carregadas`, "success");
+    } catch (e) {
+      addLog(`✗ Erro ao carregar salvas: ${e.message}`, "error");
     }
   };
 
@@ -284,36 +341,31 @@ export default function NewsAgent() {
     setNoticias([]);
     setLog([]);
     setFetched(false);
+    setUsandoCache(false);
     setExpandedIndex(null);
+    setCacheMoment(null);
 
     addLog("▶ AGENTE TECH NEWS INICIADO", "system");
     addLog(
-      `⏰ ${hora.toLocaleString("pt-BR")} — Buscando 5 notícias...`,
+      `⏰ ${hora.toLocaleString("pt-BR")} — Buscando notícias...`,
       "info"
     );
     addLog("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", "info");
 
-    const topicsSelecionados = [...TOPICS]
-      .sort(() => Math.random() - 0.5)
-      .slice(0, 5);
-
-    const resultados = [];
-    for (let i = 0; i < topicsSelecionados.length; i++) {
-      const noticia = await buscarNoticia(topicsSelecionados[i], i);
-      if (noticia) {
-        resultados.push(noticia);
-        setNoticias([...resultados]);
-      }
-      if (i < topicsSelecionados.length - 1) {
-        await new Promise((r) => setTimeout(r, 800));
-      }
-    }
+    const resultados = await buscarNoticias();
 
     addLog("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", "info");
-    addLog(
-      `✅ ${resultados.length} notícias carregadas. Bom dia!`,
-      "success"
-    );
+    
+    if (resultados && resultados.length > 0) {
+      setNoticias(resultados);
+      addLog(
+        `✅ ${resultados.length} notícias carregadas. Bom dia!`,
+        "success"
+      );
+    } else {
+      addLog(`✗ Não foi possível carregar notícias`, "error");
+    }
+    
     setLoading(false);
     setFetched(true);
   };
@@ -525,55 +577,118 @@ export default function NewsAgent() {
               ))}
             </div>
 
-            <button
-              onClick={buscarTodasNoticias}
-              disabled={loading}
-              style={{
-                width: "100%",
-                padding: "14px 24px",
-                background: loading
-                  ? "rgba(99,102,241,0.15)"
-                  : "linear-gradient(135deg, #6366f1, #818cf8)",
-                border: loading ? "1px solid rgba(99,102,241,0.3)" : "none",
-                borderRadius: "12px",
-                color: "white",
-                fontSize: "14px",
-                fontFamily: "'Syne', sans-serif",
-                fontWeight: "700",
-                cursor: loading ? "not-allowed" : "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "10px",
-                transition: "all 0.2s",
-                letterSpacing: "0.02em",
-              }}
-              onMouseEnter={(e) => {
-                if (!loading) e.currentTarget.style.transform = "translateY(-1px)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "translateY(0)";
-              }}
-            >
-              {loading ? (
-                <>
-                  <span
-                    style={{
-                      display: "inline-block",
-                      width: "14px",
-                      height: "14px",
-                      border: "2px solid rgba(255,255,255,0.3)",
-                      borderTopColor: "white",
-                      borderRadius: "50%",
-                      animation: "spin 0.8s linear infinite",
-                    }}
-                  />
-                  Buscando notícias com IA...
-                </>
-              ) : (
-                <>◈ {fetched ? "Atualizar Notícias" : "Buscar Notícias do Dia"}</>
+            <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+              <button
+                onClick={buscarTodasNoticias}
+                disabled={loading}
+                style={{
+                  flex: 1,
+                  minWidth: "200px",
+                  padding: "14px 24px",
+                  background: loading
+                    ? "rgba(99,102,241,0.15)"
+                    : "linear-gradient(135deg, #6366f1, #818cf8)",
+                  border: loading ? "1px solid rgba(99,102,241,0.3)" : "none",
+                  borderRadius: "12px",
+                  color: "white",
+                  fontSize: "14px",
+                  fontFamily: "'Syne', sans-serif",
+                  fontWeight: "700",
+                  cursor: loading ? "not-allowed" : "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "10px",
+                  transition: "all 0.2s",
+                  letterSpacing: "0.02em",
+                }}
+                onMouseEnter={(e) => {
+                  if (!loading) e.currentTarget.style.transform = "translateY(-1px)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "translateY(0)";
+                }}
+              >
+                {loading ? (
+                  <>
+                    <span
+                      style={{
+                        display: "inline-block",
+                        width: "14px",
+                        height: "14px",
+                        border: "2px solid rgba(255,255,255,0.3)",
+                        borderTopColor: "white",
+                        borderRadius: "50%",
+                        animation: "spin 0.8s linear infinite",
+                      }}
+                    />
+                    Buscando notícias com IA...
+                  </>
+                ) : (
+                  <>◈ {fetched ? "Atualizar Notícias" : "Buscar Notícias do Dia"}</>
+                )}
+              </button>
+
+              {localStorage.getItem('noticias_cache') && (
+                <button
+                  onClick={carregarDosalvadas}
+                  disabled={loading}
+                  style={{
+                    flex: 1,
+                    minWidth: "150px",
+                    padding: "14px 24px",
+                    background: usandoCache
+                      ? "rgba(6,214,160,0.15)"
+                      : "rgba(255,255,255,0.05)",
+                    border: usandoCache 
+                      ? "1px solid rgba(6,214,160,0.3)"
+                      : "1px solid rgba(255,255,255,0.1)",
+                    borderRadius: "12px",
+                    color: usandoCache ? "#06d6a0" : "rgba(255,255,255,0.6)",
+                    fontSize: "14px",
+                    fontFamily: "'Syne', sans-serif",
+                    fontWeight: "700",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "8px",
+                    transition: "all 0.2s",
+                    letterSpacing: "0.02em",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!usandoCache) {
+                      e.currentTarget.style.background = "rgba(255,255,255,0.08)";
+                      e.currentTarget.style.transform = "translateY(-1px)";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!usandoCache) {
+                      e.currentTarget.style.background = "rgba(255,255,255,0.05)";
+                    }
+                    e.currentTarget.style.transform = "translateY(0)";
+                  }}
+                >
+                  📌 Ver salvas
+                  {cacheMoment && (
+                    <span
+                      style={{
+                        fontSize: "10px",
+                        background: usandoCache ? "rgba(6,214,160,0.2)" : "rgba(255,255,255,0.1)",
+                        padding: "2px 6px",
+                        borderRadius: "3px",
+                        fontFamily: "'Space Mono', monospace",
+                      }}
+                    >
+                      {cacheMoment.toLocaleTimeString("pt-BR", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  )}
+                </button>
               )}
-            </button>
+            </div>
           </div>
 
           {log.length > 0 && (

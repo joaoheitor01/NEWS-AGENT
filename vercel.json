@@ -4,5 +4,9 @@
       "path": "/api/cron",
       "schedule": "0 11 * * *"
     }
-  ]
+  ],
+  "functions": {
+    "api/noticias.js": { "maxDuration": 30 },
+    "api/cron.js":     { "maxDuration": 30 }
+  }
 }
