@@ -2,10 +2,15 @@
 const Parser = require('rss-parser');
 
 const FEEDS = [
-  { url: 'https://www.theverge.com/rss/index.xml',  nome: 'The Verge' },
-  { url: 'https://feeds.feedburner.com/TechCrunch', nome: 'TechCrunch' },
-  { url: 'https://olhardigital.com.br/feed/',       nome: 'Olhar Digital' },
-  { url: 'https://canaltech.com.br/rss/',           nome: 'Canaltech' },
+  { url: 'https://canaltech.com.br/rss/',              nome: 'Canaltech'         },
+  { url: 'https://olhardigital.com.br/feed/',           nome: 'Olhar Digital'     },
+  { url: 'https://www.tecmundo.com.br/feed',            nome: 'TecMundo'          },
+  { url: 'https://tecnoblog.net/feed/',                 nome: 'Tecnoblog'         },
+  { url: 'https://www.tabnews.com.br/recentes/rss',     nome: 'TabNews'           },
+  { url: 'https://diolinux.com.br/feed',                nome: 'Diolinux'          },
+  { url: 'https://exame.com/tecnologia/feed/',          nome: 'Exame Tecnologia'  },
+  { url: 'https://www.theverge.com/rss/index.xml',      nome: 'The Verge'         },
+  { url: 'https://feeds.feedburner.com/TechCrunch',     nome: 'TechCrunch'        },
 ];
 
 module.exports = async function handler(req, res) {
@@ -41,7 +46,14 @@ module.exports = async function handler(req, res) {
         max_tokens: 600,
         messages: [{
           role: 'user',
-          content: `Escolha a notícia mais importante de IA ou tecnologia nesta lista: ${JSON.stringify(todosItens.slice(0, 20))}. Retorne APENAS um JSON com: "titulo" (em português), "resumo" (2 frases em português), "link" (original), "fonte". Sem texto extra.`
+          content: `Você é um curador tech com foco no Brasil. Escolha A notícia mais importante desta lista para um desenvolvedor brasileiro começar o dia.
+
+Priorize: IA, desenvolvimento, open-source, hardware, segurança, mercado tech BR.
+Prefira fontes brasileiras quando a notícia for igualmente relevante.
+
+Lista: ${JSON.stringify(todosItens.slice(0, 25))}
+
+Retorne APENAS um JSON com: "titulo" (em português), "resumo" (2 frases em português direto), "link" (original), "fonte". Sem texto extra, sem crases.`
         }]
       })
     });

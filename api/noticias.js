@@ -1,22 +1,63 @@
 // api/noticias.js
 const Parser = require('rss-parser');
 
-// Múltiplas fontes RSS para variedade
+// Múltiplas fontes RSS com foco Brasil
 const FEEDS = [
-  { url: 'https://www.theverge.com/rss/index.xml',         nome: 'The Verge' },
-  { url: 'https://feeds.feedburner.com/TechCrunch',        nome: 'TechCrunch' },
-  { url: 'https://www.wired.com/feed/rss',                 nome: 'Wired' },
-  { url: 'https://olhardigital.com.br/feed/',              nome: 'Olhar Digital' },
-  { url: 'https://canaltech.com.br/rss/',                  nome: 'Canaltech' },
+  // === BRASIL — Notícias diárias ===
+  { url: 'https://canaltech.com.br/rss/',                          nome: 'Canaltech',        pais: 'BR' },
+  { url: 'https://olhardigital.com.br/feed/',                      nome: 'Olhar Digital',    pais: 'BR' },
+  { url: 'https://www.tecmundo.com.br/feed',                       nome: 'TecMundo',         pais: 'BR' },
+  { url: 'https://tecnoblog.net/feed/',                            nome: 'Tecnoblog',        pais: 'BR' },
+  { url: 'https://www.showmetech.com.br/feed/',                    nome: 'Show Me Tech',     pais: 'BR' },
+
+  // === BRASIL — Hardware e Infraestrutura ===
+  { url: 'https://www.clubedohardware.com.br/rss/1-noticias/',     nome: 'Clube do Hardware',pais: 'BR' },
+  { url: 'https://diolinux.com.br/feed',                           nome: 'Diolinux',         pais: 'BR' },
+
+  // === BRASIL — Desenvolvimento e Engenharia ===
+  { url: 'https://www.tabnews.com.br/recentes/rss',                nome: 'TabNews',          pais: 'BR' },
+  { url: 'https://codigofonte.com.br/feed',                        nome: 'Código Fonte TV',  pais: 'BR' },
+
+  // === BRASIL — Mercado e Negócios Tech ===
+  { url: 'https://exame.com/tecnologia/feed/',                     nome: 'Exame Tecnologia', pais: 'BR' },
+  { url: 'https://www.infomoney.com.br/feed/',                     nome: 'InfoMoney',        pais: 'BR' },
+
+  // === INTERNACIONAL — Referências globais ===
+  { url: 'https://www.theverge.com/rss/index.xml',                 nome: 'The Verge',        pais: 'US' },
+  { url: 'https://feeds.feedburner.com/TechCrunch',                nome: 'TechCrunch',       pais: 'US' },
+  { url: 'https://www.wired.com/feed/rss',                         nome: 'Wired',            pais: 'US' },
 ];
 
 // Palavras-chave que definem o conteúdo relevante
 const KEYWORDS = [
-  'ai', 'artificial intelligence', 'inteligência artificial',
-  'google', 'microsoft', 'openai', 'anthropic', 'meta ai',
-  'gemini', 'copilot', 'gpt', 'claude', 'llm',
-  'github', 'apple intelligence', 'chatgpt', 'machine learning',
-  'neural', 'automation', 'robot', 'tech', 'startup'
+  // IA e modelos
+  'inteligência artificial', 'ia ', ' ia,', 'ai ', 'artificial intelligence',
+  'llm', 'gpt', 'gemini', 'claude', 'copilot', 'machine learning',
+  'deep learning', 'neural', 'chatgpt', 'openai', 'anthropic',
+
+  // Empresas globais
+  'google', 'microsoft', 'meta', 'apple', 'amazon', 'nvidia',
+  'samsung', 'intel', 'qualcomm',
+
+  // Empresas e mercado BR
+  'github', 'startup', 'nubank', 'ifood', 'totvs',
+  'mercado livre', 'magalu', 'b3', 'fintec', 'fintech',
+
+  // Dev e infra
+  'react', 'typescript', 'python', 'django', 'node', 'kubernetes',
+  'docker', 'linux', 'open source', 'open-source', 'kernel',
+  'ubuntu', 'fedora', 'distribuição', 'framework', 'api',
+
+  // Hardware
+  'processador', 'gpu', 'placa de vídeo', 'memória ram', 'ssd',
+  'benchmark', 'ryzen', 'geforce', 'radeon',
+
+  // Segurança
+  'cibersegurança', 'ransomware', 'vazamento', 'hack', 'segurança digital',
+
+  // Geral tech
+  'tecnologia', 'tech', 'software', 'hardware', 'automação',
+  'nuvem', 'cloud', 'dados', 'blockchain', '5g', 'iot'
 ];
 
 function isRelevant(item) {
@@ -110,18 +151,25 @@ module.exports = async function handler(req, res) {
         temperature: 0.3,
         messages: [{
           role: 'user',
-          content: `Você é um curador de notícias tech. Analise esta lista e selecione as 5 notícias MAIS IMPORTANTES sobre IA, tecnologia, Google, Microsoft, Anthropic, OpenAI, GitHub, Meta, Apple.
+          content: `Você é um curador de notícias tech com foco no Brasil. Analise esta lista de notícias coletadas de portais brasileiros e internacionais.
+Selecione as 5 notícias MAIS IMPORTANTES considerando esta ordem de prioridade:
 
-Lista:
+1. Notícias de portais brasileiros (Canaltech, Olhar Digital, TecMundo, Tecnoblog, Clube do Hardware, Diolinux, TabNews, Código Fonte TV, Exame, InfoMoney)
+2. Notícias internacionais que impactam diretamente o mercado brasileiro de tecnologia
+
+Temas prioritários: IA, desenvolvimento de software, hardware, Linux/open-source, segurança digital, mercado tech Brasil, startups brasileiras.
+
+Lista disponível:
 ${JSON.stringify(candidatos, null, 2)}
 
 Retorne APENAS um array JSON válido com exatamente 5 objetos, cada um com:
-- "titulo": título traduzido para português
-- "resumo": 2 frases explicando o que aconteceu e por que importa
+- "titulo": título em português claro e direto
+- "resumo": 2 frases explicando o que aconteceu e por que importa para o público brasileiro
 - "fonte": nome do veículo
-- "link": URL original sem alteração
-- "empresa": empresa principal (ex: Google, Microsoft, Anthropic)
+- "link": URL original sem nenhuma alteração
+- "empresa": empresa ou projeto principal mencionado
 - "impacto": "alto", "médio" ou "curto"
+- "pais": "BR" se fonte brasileira, "US" se internacional
 
 Retorne SOMENTE o array JSON. Sem texto, sem markdown, sem crases.`
         }]
