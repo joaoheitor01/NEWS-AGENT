@@ -165,41 +165,43 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    // Filtra por relevância
-    const relevantes = todosItens.filter(item => isRelevant(item, topicFilter)).slice(0, 20);
-    const candidatos = relevantes.length > 0 ? relevantes : todosItens.slice(0, 20);
+     // Filtra por relevância
+     const relevantes = todosItens.filter(item => isRelevant(item, topicFilter)).slice(0, 40);
+     const candidatos = relevantes.length > 0 ? relevantes : todosItens.slice(0, 40);
 
-    console.log(`[NOTICIAS] Candidatos para IA: ${candidatos.length}`);
+     console.log(`[NOTICIAS] Candidatos para IA: ${candidatos.length}`);
 
-    // Chama IA para selecionar e resumir as 5 melhores
-    console.log('[NOTICIAS] Chamando OpenRouter...');
-    
-    const aiResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://project-o0ekx.vercel.app',
-        'X-Title': 'Tech News Agent'
-      },
-      body: JSON.stringify({
-        model: 'openrouter/auto',
-        max_tokens: 1500,
-        temperature: 0.3,
-        messages: [{
-          role: 'user',
-          content: `Você é um curador de notícias tech com foco no Brasil. Analise esta lista de notícias coletadas de portais brasileiros e internacionais.
-Selecione as 5 notícias MAIS IMPORTANTES considerando esta ordem de prioridade:
+     // Chama IA para selecionar e resumir as 15-21 melhores
+     console.log('[NOTICIAS] Chamando OpenRouter...');
+     
+     const aiResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+       method: 'POST',
+       headers: {
+         'Authorization': `Bearer ${apiKey}`,
+         'Content-Type': 'application/json',
+         'HTTP-Referer': 'https://project-o0ekx.vercel.app',
+         'X-Title': 'Tech News Agent'
+       },
+       body: JSON.stringify({
+         model: 'openrouter/auto',
+         max_tokens: 3000,
+         temperature: 0.4,
+         messages: [{
+           role: 'user',
+           content: `Você é um curador de notícias tech com foco no Brasil. Analise esta lista de notícias coletadas de portais brasileiros e internacionais.
+Selecione entre 15 e 21 notícias MAIS IMPORTANTES e DIVERSIFICADAS considerando esta ordem de prioridade:
 
 1. Notícias de portais brasileiros (Canaltech, Olhar Digital, TecMundo, Tecnoblog, Clube do Hardware, Diolinux, TabNews, Código Fonte TV, Exame, InfoMoney)
 2. Notícias internacionais que impactam diretamente o mercado brasileiro de tecnologia
 
 Temas prioritários: IA, desenvolvimento de software, hardware, Linux/open-source, segurança digital, mercado tech Brasil, startups brasileiras.
 
+DIVERSIFIQUE o conteúdo: selecione notícias de DIFERENTES TEMAS e DIFERENTES FONTES. Não repita o mesmo assunto várias vezes.
+
 Lista disponível:
 ${JSON.stringify(candidatos, null, 2)}
 
-Retorne APENAS um array JSON válido com exatamente 5 objetos, cada um com:
+Retorne APENAS um array JSON válido com entre 15 e 21 objetos, cada um com:
 - "titulo": título em português claro e direto
 - "resumo": 2 frases explicando o que aconteceu e por que importa para o público brasileiro
 - "fonte": nome do veículo
@@ -209,16 +211,16 @@ Retorne APENAS um array JSON válido com exatamente 5 objetos, cada um com:
 - "pais": "BR" se fonte brasileira, "US" se internacional
 
 Retorne SOMENTE o array JSON. Sem texto, sem markdown, sem crases.`
-        }]
-      })
-    });
+         }]
+       })
+     });
 
     if (!aiResponse.ok) {
       const errText = await aiResponse.text();
       console.error(`[NOTICIAS] OpenRouter erro ${aiResponse.status}:`, errText.substring(0, 500));
       
       // Fallback: retorna os candidatos sem curação da IA
-      const fallbackNoticias = candidatos.slice(0, 5).map(item => ({
+      const fallbackNoticias = candidatos.slice(0, 21).map(item => ({
         titulo: item.titulo,
         resumo: item.resumoOriginal.substring(0, 200),
         fonte: item.fonte,
@@ -248,7 +250,7 @@ Retorne SOMENTE o array JSON. Sem texto, sem markdown, sem crases.`
       console.error('[NOTICIAS] Erro ao parsear JSON. Resposta bruta:', textoBruto.substring(0, 500));
       
       // Fallback novamente
-      const fallbackNoticias = candidatos.slice(0, 5).map(item => ({
+      const fallbackNoticias = candidatos.slice(0, 21).map(item => ({
         titulo: item.titulo,
         resumo: item.resumoOriginal.substring(0, 200),
         fonte: item.fonte,
@@ -274,7 +276,7 @@ Retorne SOMENTE o array JSON. Sem texto, sem markdown, sem crases.`
       console.error('[NOTICIAS] JSON.parse falhou:', parseErr.message);
       
       // Fallback final
-      const fallbackNoticias = candidatos.slice(0, 5).map(item => ({
+      const fallbackNoticias = candidatos.slice(0, 21).map(item => ({
         titulo: item.titulo,
         resumo: item.resumoOriginal.substring(0, 200),
         fonte: item.fonte,
@@ -298,8 +300,8 @@ Retorne SOMENTE o array JSON. Sem texto, sem markdown, sem crases.`
       noticias = [noticias];
     }
 
-    // Garante máximo de 5
-    noticias = noticias.slice(0, 5);
+    // Garante máximo de 21
+    noticias = noticias.slice(0, 21);
 
     console.log(`[NOTICIAS] Sucesso! ${noticias.length} notícias retornadas`);
 

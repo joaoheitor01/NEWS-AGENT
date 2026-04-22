@@ -14,7 +14,7 @@ const CATEGORY_COLORS = {
   "Hardware / Chips": { primary: "#c8c6c8", dark: "#474649" },
 };
 
-function NewsCard({ noticia, index, onExpand, expanded, onSave, isSaved }) {
+function NewsCard({ noticia, index, onExpand, expanded, onSave, isSaved, showBookmark = false }) {
   const categoryColor = CATEGORY_COLORS[noticia.empresa] || { primary: "#c4c0ff", dark: "#8881ff" };
   
   return (
@@ -66,9 +66,13 @@ function NewsCard({ noticia, index, onExpand, expanded, onSave, isSaved }) {
           onSave(index);
         }}
         className="px-sm py-sm text-lg transition-all hover:scale-110"
-        title={isSaved ? "Remover dos salvos" : "Salvar notícia"}
+        title={showBookmark ? "Remover dos salvos" : (isSaved ? "Remover dos salvos" : "Salvar notícia")}
       >
-        {isSaved ? "❤️" : "🤍"}
+        {showBookmark ? (
+          <span className="material-symbols-outlined">{isSaved ? "bookmark" : "bookmark_border"}</span>
+        ) : (
+          isSaved ? "❤️" : "🤍"
+        )}
       </button>
     </article>
   );
@@ -84,7 +88,7 @@ export default function App() {
   const [fetched, setFetched] = useState(false);
   const [selectedTab, setSelectedTab] = useState("ia");
   const [noticiasSalvas, setNoticiasSalvas] = useState([]);
-  const [mostraSalvas, setMostraSalvas] = useState(false);
+  const [currentView, setCurrentView] = useState("home"); // "home", "ia", "hardware", "cyber", "chips", "web3", "salvos"
   const logRef = useRef(null);
 
   // Carrega notícias salvas do localStorage ao montar
@@ -117,11 +121,11 @@ export default function App() {
   useEffect(() => {
     if (noticiasOriginais.length > 0) {
       const topicKeywords = {
-        ia: ["AI", "IA", "inteligência artificial", "neural", "GPT", "transformer", "LLM"],
-        hardware: ["hardware", "GPU", "NVIDIA", "processor", "chip", "ARM", "Intel"],
-        cyber: ["cyber", "segurança", "cibersegurança", "encryption", "quantum", "NIST", "cryptographic"],
-        chips: ["chip", "TSMC", "semiconductor", "2nm", "processo", "nanômetros", "node"],
-        web3: ["web3", "blockchain", "crypto", "descentralizado", "DeFi", "NFT"]
+        ia: ["AI", "IA", "inteligência artificial", "neural", "GPT", "transformer", "LLM", "machine learning"],
+        hardware: ["hardware", "GPU", "NVIDIA", "processor", "chip", "ARM", "Intel", "benchmark"],
+        cyber: ["cyber", "segurança", "cibersegurança", "encryption", "quantum", "NIST", "cryptographic", "ransomware"],
+        chips: ["chip", "TSMC", "semiconductor", "2nm", "processo", "nanômetros", "node", "foundries"],
+        web3: ["web3", "blockchain", "crypto", "descentralizado", "DeFi", "NFT", "web 3"]
       };
 
       const keywords = topicKeywords[selectedTab] || [];
@@ -139,8 +143,8 @@ export default function App() {
     setLog((prev) => [...prev, { msg, id: Date.now() + Math.random() }]);
   };
 
-  const salvarNoticia = (index) => {
-    const noticia = noticias[index];
+  const salvarNoticia = (index, fromSalvos = false) => {
+    const noticia = fromSalvos ? noticiasSalvas[index] : noticias[index];
     const jaExiste = noticiasSalvas.some(n => n.link === noticia.link);
     
     let novasSalvas;
@@ -228,8 +232,27 @@ export default function App() {
     setFetched(true);
   };
 
+  const goToHome = () => {
+    setCurrentView("home");
+    setNoticias([]);
+    setNoticiasOriginais([]);
+    setLog([]);
+    setFetched(false);
+  };
+
+  const goToTab = (tab) => {
+    setCurrentView(tab);
+    setSelectedTab(tab);
+  };
+
+  const goToSalvos = () => {
+    setCurrentView("salvos");
+  };
+
   const greetingHour = hora.getHours();
   const greeting = greetingHour < 12 ? "Bom dia" : greetingHour < 18 ? "Boa tarde" : "Boa noite";
+
+  const isHome = currentView === "home";
 
   return (
     <>
@@ -252,18 +275,22 @@ export default function App() {
         {/* Top Navigation Bar - Tabs */}
         <header className="fixed top-0 w-full z-50 flex justify-between items-center px-6 py-4 bg-[#0a0a0c]/80 backdrop-blur-md border-b border-white/10">
           <div className="flex items-center gap-8">
-            <div className="text-xl font-black tracking-tighter text-[#7c73ff]" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+            <button 
+              onClick={goToHome}
+              className="text-xl font-black tracking-tighter text-[#7c73ff] hover:opacity-80 transition-opacity cursor-pointer" 
+              style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+            >
               TECH NEWS AGENT
-            </div>
+            </button>
             <div className="hidden md:flex gap-6 items-center">
               {Object.entries(TOPICS).map(([key, topic]) => (
                 <button
                   key={key}
-                  onClick={() => setSelectedTab(key)}
+                  onClick={() => goToTab(key)}
                   className="font-['Space_Grotesk'] uppercase tracking-widest text-xs font-bold transition-colors pb-1"
                   style={{
-                    color: selectedTab === key ? "#7c73ff" : "#9ca3af",
-                    borderBottom: selectedTab === key ? "2px solid #7c73ff" : "none",
+                    color: currentView === key ? "#7c73ff" : "#9ca3af",
+                    borderBottom: currentView === key ? "2px solid #7c73ff" : "none",
                   }}
                 >
                   {topic.label}
@@ -276,143 +303,235 @@ export default function App() {
 
         {/* Main Content */}
         <main className="max-w-4xl mx-auto px-6 pt-32 pb-32 flex flex-col gap-8">
-          {/* Header Info */}
-          <section className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
-            <div>
-              <h2 className="font-headline-lg text-headline-lg text-primary">TECH NEWS AGENT</h2>
-              <p className="font-body-md text-body-md text-on-surface-variant mt-2" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                {greeting}, João Heitor
-              </p>
-            </div>
-            <div className="text-right">
-              <div className="font-headline-xl text-headline-xl tracking-tighter leading-none">
-                {hora.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+          {/* Header Info - Only on Home */}
+          {isHome && (
+            <section className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+              <div>
+                <h2 className="font-headline-lg text-headline-lg text-primary">TECH NEWS AGENT</h2>
+                <p className="font-body-md text-body-md text-on-surface-variant mt-2" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                  {greeting}, João Heitor
+                </p>
               </div>
-              <div className="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest">
-                {hora.toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "short" })}
-              </div>
-            </div>
-          </section>
-
-          {/* Topic Buttons (Static Filters) */}
-          <nav className="flex flex-wrap justify-center gap-3">
-            <button
-              onClick={() => setSelectedTab(null)}
-              className="px-6 py-3 rounded-full border border-outline-variant hover:border-primary transition-colors text-label-caps uppercase font-bold"
-              style={{
-                backgroundColor: selectedTab === null ? "rgba(196, 192, 255, 0.15)" : "rgb(31, 31, 39)",
-                borderColor: selectedTab === null ? "#c4c0ff" : "#47454f",
-                color: selectedTab === null ? "#c4c0ff" : "rgba(200, 198, 216, 1)",
-              }}
-            >
-              Todos
-            </button>
-            {Object.entries(TOPICS).map(([key, topic]) => (
-              <button
-                key={key}
-                onClick={() => setSelectedTab(key)}
-                className="px-6 py-3 rounded-full border border-outline-variant hover:border-primary transition-colors text-label-caps uppercase font-bold"
-                style={{
-                  backgroundColor: selectedTab === key ? "rgba(196, 192, 255, 0.15)" : "rgb(31, 31, 39)",
-                  borderColor: selectedTab === key ? "#c4c0ff" : "#47454f",
-                  color: selectedTab === key ? "#c4c0ff" : "rgba(200, 198, 216, 1)",
-                }}
-              >
-                {topic.shortLabel}
-              </button>
-            ))}
-          </nav>
-
-          {/* Action Buttons */}
-          <div className="flex flex-col md:flex-row gap-4">
-            <button
-              onClick={buscarNoticias}
-              disabled={loading}
-              className="flex-1 py-4 bg-primary text-on-primary font-headline-md text-headline-md rounded-xl hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-            >
-              <span className="material-symbols-outlined">add</span>
-              {loading ? "Buscando..." : "+ Atualizar Notícias"}
-            </button>
-            <button
-              onClick={() => setMostraSalvas(!mostraSalvas)}
-              className="flex-1 py-4 border border-outline text-on-surface font-headline-md text-headline-md rounded-xl hover:bg-white/5 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
-            >
-              <span className="material-symbols-outlined">bookmark</span>
-              Ver salvas
-            </button>
-          </div>
-
-          {/* Terminal Box */}
-          <div className="bg-[#0e0d15] rounded-xl border border-white/5 shadow-inner px-6 py-4">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-              <span className="font-label-caps text-[10px] text-green-500/70 tracking-widest uppercase">Live Agent Stream</span>
-            </div>
-            <div ref={logRef} className="font-mono text-sm text-green-400/90 leading-relaxed max-h-40 overflow-y-auto">
-              {log.length === 0 ? (
-                <>
-                  <p>&gt; initializing neural news crawler...</p>
-                  <p>&gt; scanning 42 sub-sectors for alpha signals</p>
-                  <p>&gt; filtering noise: 12.4k raw inputs processed</p>
-                  <p className="animate-pulse">&gt; waiting for manual trigger...</p>
-                </>
-              ) : (
-                log.map((l) => (
-                  <p key={l.id}>&gt; {l.msg}</p>
-                ))
-              )}
-              {loading && <p className="animate-pulse">&gt; processing...</p>}
-            </div>
-          </div>
-
-          {/* News List */}
-          {noticias.length > 0 && (
-            <section className="flex flex-col gap-4">
-              <h3 className="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest">notícias encontradas</h3>
-              {noticias.map((n, i) => (
-                <div key={i} onClick={() => setExpandedIndex(expandedIndex === i ? null : i)}>
-                  <NewsCard
-                    noticia={n}
-                    index={i}
-                    expanded={expandedIndex === i}
-                    onExpand={() => {}}
-                    onSave={salvarNoticia}
-                    isSaved={estaRemovido(n.link)}
-                  />
+              <div className="text-right">
+                <div className="font-headline-xl text-headline-xl tracking-tighter leading-none">
+                  {hora.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
                 </div>
-              ))}
+                <div className="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest">
+                  {hora.toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "short" })}
+                </div>
+              </div>
             </section>
           )}
 
-          {/* Image Cards (System Health & Market Sentiment) */}
-          <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-surface-container-high/40 border border-white/5 rounded-xl p-6 flex flex-col gap-2">
-              <img 
-                className="w-full h-32 object-cover rounded-lg mb-2 opacity-60"
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuCFuDq1X-GIPf2koag6UEw-rSu0EOuoUfE6i9TIRWbN4HlElaAL7OUq4rVfXbL5jR0cQDyeMhwkuB5OsGZ-9sCt2NQpAr4NEXHXd0Qp-Zr5f9DxypXDO9KbiTVXGRlTdXPTfmksfRKloZthSRPo1jrHM3oOLPxIu8ezzYmkXy9QWfNZ5WZJnb1wF-0t2SFa7gE9QdoEEe46GQyW2JucEEL-W0PvYhVQDvXsULgh1u52dvkbMAAbUyWBgTW07mgI18mkX9OXKIt6hMo"
-                alt="System Health"
-              />
-              <h5 className="font-headline-md text-headline-md text-primary">System Health</h5>
-              <p className="font-body-sm text-body-sm text-on-surface-variant">Active scrapers: 142. Proxy latency: 24ms. Signal-to-noise ratio: Optimal.</p>
-            </div>
-            <div className="bg-surface-container-high/40 border border-white/5 rounded-xl p-6 flex flex-col gap-2">
-              <img 
-                className="w-full h-32 object-cover rounded-lg mb-2 opacity-60"
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuCoedg2Yz4aoDJpEQGYyKAZZ--AnE5HscRpovlT6ctAuCWZuTesvt_ctvNO1rEO7a0zGnZXvBRkvHp7EkJU8YU5uRcFSAfsF8VA9_qSQjV213rb66nftM1495ibkCUg6am0THv3AmqYWftxPpmHojgB4tSP79hb8je550hNoV51e4jVKzjSERjHrbKy-AxctOQZDkhHeXOlFtK0B3HU1zlYziQN-aUD2JW9kYQk6WfzaAG0Nxystea1YJLOQ30Dg1ZS_v0dw0KLcHo"
-                alt="Market Sentiment"
-              />
-              <h5 className="font-headline-md text-headline-md text-tertiary">Market Sentiment</h5>
-              <p className="font-body-sm text-body-sm text-on-surface-variant">AI sector bullish (+4.2%). Crypto sideways. Hardware supply chains stabilizing.</p>
-            </div>
-          </section>
+          {/* Home View */}
+          {isHome && (
+            <>
+              {/* Topic Buttons (Static Filters) */}
+              <nav className="flex flex-wrap justify-center gap-3">
+                {Object.entries(TOPICS).map(([key, topic]) => (
+                  <button
+                    key={key}
+                    onClick={() => goToTab(key)}
+                    className="px-6 py-3 rounded-full border border-outline-variant hover:border-primary transition-colors text-label-caps uppercase font-bold"
+                    style={{
+                      backgroundColor: "rgb(31, 31, 39)",
+                      borderColor: "#47454f",
+                      color: "rgba(200, 198, 216, 1)",
+                    }}
+                  >
+                    {topic.shortLabel}
+                  </button>
+                ))}
+              </nav>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col md:flex-row gap-4">
+                <button
+                  onClick={buscarNoticias}
+                  disabled={loading}
+                  className="flex-1 py-4 bg-primary text-on-primary font-headline-md text-headline-md rounded-xl hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  <span className="material-symbols-outlined">add</span>
+                  {loading ? "Buscando..." : "+ Atualizar Notícias"}
+                </button>
+                <button
+                  onClick={goToSalvos}
+                  className="flex-1 py-4 border border-outline text-on-surface font-headline-md text-headline-md rounded-xl hover:bg-white/5 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                >
+                  <span className="material-symbols-outlined">bookmark</span>
+                  Ver salvas
+                </button>
+              </div>
+
+              {/* Terminal Box */}
+              <div className="bg-[#0e0d15] rounded-xl border border-white/5 shadow-inner px-6 py-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                  <span className="font-label-caps text-[10px] text-green-500/70 tracking-widest uppercase">Live Agent Stream</span>
+                </div>
+                <div ref={logRef} className="font-mono text-sm text-green-400/90 leading-relaxed max-h-40 overflow-y-auto">
+                  {log.length === 0 ? (
+                    <>
+                      <p>&gt; initializing neural news crawler...</p>
+                      <p>&gt; scanning 42 sub-sectors for alpha signals</p>
+                      <p>&gt; filtering noise: 12.4k raw inputs processed</p>
+                      <p className="animate-pulse">&gt; waiting for manual trigger...</p>
+                    </>
+                  ) : (
+                    log.map((l) => (
+                      <p key={l.id}>&gt; {l.msg}</p>
+                    ))
+                  )}
+                  {loading && <p className="animate-pulse">&gt; processing...</p>}
+                </div>
+              </div>
+
+              {/* Image Cards (System Health & Market Sentiment) */}
+              <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-surface-container-high/40 border border-white/5 rounded-xl p-6 flex flex-col gap-2">
+                  <img 
+                    className="w-full h-32 object-cover rounded-lg mb-2 opacity-60"
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuCFuDq1X-GIPf2koag6UEw-rSu0EOuoUfE6i9TIRWbN4HlElaAL7OUq4rVfXbL5jR0cQDyeMhwkuB5OsGZ-9sCt2NQpAr4NEXHXd0Qp-Zr5f9DxypXDO9KbiTVXGRlTdXPTfmksfRKloZthSRPo1jrHM3oOLPxIu8ezzYmkXy9QWfNZ5WZJnb1wF-0t2SFa7gE9QdoEEe46GQyW2JucEEL-W0PvYhVQDvXsULgh1u52dvkbMAAbUyWBgTW07mgI18mkX9OXKIt6hMo"
+                    alt="System Health"
+                  />
+                  <h5 className="font-headline-md text-headline-md text-primary">System Health</h5>
+                  <p className="font-body-sm text-body-sm text-on-surface-variant">Active scrapers: 142. Proxy latency: 24ms. Signal-to-noise ratio: Optimal.</p>
+                </div>
+                <div className="bg-surface-container-high/40 border border-white/5 rounded-xl p-6 flex flex-col gap-2">
+                  <img 
+                    className="w-full h-32 object-cover rounded-lg mb-2 opacity-60"
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuCoedg2Yz4aoDJpEQGYyKAZZ--AnE5HscRpovlT6ctAuCWZuTesvt_ctvNO1rEO7a0zGnZXvBRkvHp7EkJU8YU5uRcFSAfsF8VA9_qSQjV213rb66nftM1495ibkCUg6am0THv3AmqYWftxPpmHojgB4tSP79hb8je550hNoV51e4jVKzjSERjHrbKy-AxctOQZDkhHeXOlFtK0B3HU1zlYziQN-aUD2JW9kYQk6WfzaAG0Nxystea1YJLOQ30Dg1ZS_v0dw0KLcHo"
+                    alt="Market Sentiment"
+                  />
+                  <h5 className="font-headline-md text-headline-md text-tertiary">Market Sentiment</h5>
+                  <p className="font-body-sm text-body-sm text-on-surface-variant">AI sector bullish (+4.2%). Crypto sideways. Hardware supply chains stabilizing.</p>
+                </div>
+              </section>
+            </>
+          )}
+
+          {/* Tab Views */}
+          {!isHome && (
+            <>
+              {/* Action Buttons */}
+              <div className="flex flex-col md:flex-row gap-4">
+                <button
+                  onClick={buscarNoticias}
+                  disabled={loading}
+                  className="flex-1 py-4 bg-primary text-on-primary font-headline-md text-headline-md rounded-xl hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  <span className="material-symbols-outlined">add</span>
+                  {loading ? "Buscando..." : "+ Atualizar Notícias"}
+                </button>
+                <button
+                  onClick={goToSalvos}
+                  className="flex-1 py-4 border border-outline text-on-surface font-headline-md text-headline-md rounded-xl hover:bg-white/5 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                >
+                  <span className="material-symbols-outlined">bookmark</span>
+                  Ver salvas
+                </button>
+              </div>
+
+              {/* Terminal Box */}
+              <div className="bg-[#0e0d15] rounded-xl border border-white/5 shadow-inner px-6 py-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                  <span className="font-label-caps text-[10px] text-green-500/70 tracking-widest uppercase">Live Agent Stream</span>
+                </div>
+                <div ref={logRef} className="font-mono text-sm text-green-400/90 leading-relaxed max-h-40 overflow-y-auto">
+                  {log.length === 0 ? (
+                    <>
+                      <p>&gt; initializing neural news crawler...</p>
+                      <p>&gt; scanning 42 sub-sectors for alpha signals</p>
+                      <p>&gt; filtering noise: 12.4k raw inputs processed</p>
+                      <p className="animate-pulse">&gt; waiting for manual trigger...</p>
+                    </>
+                  ) : (
+                    log.map((l) => (
+                      <p key={l.id}>&gt; {l.msg}</p>
+                    ))
+                  )}
+                  {loading && <p className="animate-pulse">&gt; processing...</p>}
+                </div>
+              </div>
+
+              {/* News List */}
+              {noticias.length > 0 && (
+                <section className="flex flex-col gap-4">
+                  <h3 className="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest">{noticias.length} notícias encontradas</h3>
+                  {noticias.map((n, i) => (
+                    <div key={i} onClick={() => setExpandedIndex(expandedIndex === i ? null : i)}>
+                      <NewsCard
+                        noticia={n}
+                        index={i}
+                        expanded={expandedIndex === i}
+                        onExpand={() => {}}
+                        onSave={salvarNoticia}
+                        isSaved={estaRemovido(n.link)}
+                        showBookmark={false}
+                      />
+                    </div>
+                  ))}
+                </section>
+              )}
+            </>
+          )}
+
+          {/* Salvos View */}
+          {currentView === "salvos" && (
+            <section className="flex flex-col gap-4">
+              <div className="flex justify-between items-center">
+                <h3 className="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest">
+                  {noticiasSalvas.length} notícia{noticiasSalvas.length !== 1 ? "s" : ""} salva{noticiasSalvas.length !== 1 ? "s" : ""}
+                </h3>
+                {noticiasSalvas.length > 0 && (
+                  <button
+                    onClick={() => {
+                      setNoticiasSalvas([]);
+                      localStorage.removeItem('noticias_salvas');
+                      addLog("✓ Todos os salvos foram removidos");
+                    }}
+                    className="px-4 py-2 text-sm font-bold rounded-lg transition-all"
+                    style={{
+                      color: "rgba(255,77,109,0.9)",
+                      backgroundColor: "rgba(255,77,109,0.1)",
+                      border: "1px solid rgba(255,77,109,0.2)"
+                    }}
+                  >
+                    Limpar tudo
+                  </button>
+                )}
+              </div>
+
+              {noticiasSalvas.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="text-on-surface-variant">Nenhuma notícia salva ainda</p>
+                </div>
+              ) : (
+                noticiasSalvas.map((n, i) => (
+                  <div key={i} onClick={() => setExpandedIndex(expandedIndex === `salvo_${i}` ? null : `salvo_${i}`)}>
+                    <NewsCard
+                      noticia={n}
+                      index={i}
+                      expanded={expandedIndex === `salvo_${i}`}
+                      onExpand={() => {}}
+                      onSave={() => salvarNoticia(i, true)}
+                      isSaved={true}
+                      showBookmark={true}
+                    />
+                  </div>
+                ))
+              )}
+            </section>
+          )}
         </main>
 
         {/* Bottom Navigation (Mobile) */}
         <nav className="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-16 px-4 bg-[#0a0a0c]/90 backdrop-blur-lg border-t border-white/10">
-          <a href="#" className="flex flex-col items-center justify-center text-[#7c73ff] bg-white/5 rounded-xl px-3 py-1">
+          <button onClick={goToHome} className="flex flex-col items-center justify-center text-[#7c73ff] bg-white/5 rounded-xl px-3 py-1">
             <span className="material-symbols-outlined" data-weight="fill">sensors</span>
-            <span className="font-['Space_Grotesk'] text-[10px] font-medium">Feed</span>
-          </a>
+            <span className="font-['Space_Grotesk'] text-[10px] font-medium">Home</span>
+          </button>
           <a href="#" className="flex flex-col items-center justify-center text-gray-500 hover:text-white transition-transform active:scale-95">
             <span className="material-symbols-outlined">trending_up</span>
             <span className="font-['Space_Grotesk'] text-[10px] font-medium">Trends</span>
