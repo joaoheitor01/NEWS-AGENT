@@ -1,0 +1,704 @@
+import { useState, useEffect, useRef } from "react";
+
+const TOPICS = [
+  "Google AI 2025",
+  "Microsoft Copilot novidades",
+  "GitHub Copilot update",
+  "Anthropic Claude novidades",
+  "OpenAI GPT novidades",
+  "Gemini Google AI",
+  "inteligência artificial tecnologia",
+  "Meta AI novidades",
+  "Apple Intelligence",
+  "startup tecnologia Brasil",
+];
+
+// O prompt agora fica no backend por segurança, mas mantemos os tópicos aqui
+
+function NewsCard({ noticia, index, onExpand, expanded }) {
+  const impactColor = {
+    alto: "#ff4d6d",
+    médio: "#ffd60a",
+    curto: "#06d6a0",
+  };
+
+  const empresaIcons = {
+    Google: "G",
+    Microsoft: "M",
+    Anthropic: "A",
+    OpenAI: "O",
+    GitHub: "⌥",
+    Meta: "◈",
+    Apple: "",
+    default: "◆",
+  };
+
+  const icon = empresaIcons[noticia.empresa] || empresaIcons.default;
+  const color = impactColor[noticia.impacto] || "#06d6a0";
+
+  return (
+    <div
+      style={{
+        background: "rgba(255,255,255,0.03)",
+        border: `1px solid rgba(255,255,255,0.08)`,
+        borderLeft: `3px solid ${color}`,
+        borderRadius: "12px",
+        padding: "20px 24px",
+        marginBottom: "16px",
+        cursor: "pointer",
+        transition: "all 0.25s ease",
+        animation: `slideIn 0.4s ease ${index * 0.1}s both`,
+        position: "relative",
+        overflow: "hidden",
+      }}
+      onClick={() => onExpand(index)}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = "rgba(255,255,255,0.06)";
+        e.currentTarget.style.transform = "translateX(4px)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = "rgba(255,255,255,0.03)";
+        e.currentTarget.style.transform = "translateX(0)";
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "flex-start", gap: "16px" }}>
+        <div
+          style={{
+            width: "42px",
+            height: "42px",
+            borderRadius: "10px",
+            background: `${color}20`,
+            border: `1px solid ${color}40`,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "18px",
+            flexShrink: 0,
+            fontWeight: "700",
+            color: color,
+          }}
+        >
+          {icon}
+        </div>
+
+        <div style={{ flex: 1 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              marginBottom: "6px",
+              flexWrap: "wrap",
+            }}
+          >
+            <span
+              style={{
+                fontSize: "11px",
+                fontFamily: "'Space Mono', monospace",
+                color: color,
+                background: `${color}15`,
+                padding: "2px 8px",
+                borderRadius: "4px",
+                letterSpacing: "0.05em",
+                textTransform: "uppercase",
+              }}
+            >
+              {noticia.empresa || "TECH"}
+            </span>
+            <span
+              style={{
+                fontSize: "11px",
+                color: "rgba(255,255,255,0.3)",
+                fontFamily: "'Space Mono', monospace",
+              }}
+            >
+              {noticia.fonte}
+            </span>
+            <span
+              style={{
+                fontSize: "11px",
+                color: "rgba(255,255,255,0.2)",
+                fontFamily: "'Space Mono', monospace",
+              }}
+            >
+              · {noticia.data}
+            </span>
+          </div>
+
+          <h3
+            style={{
+              margin: "0 0 8px 0",
+              fontSize: "15px",
+              fontFamily: "'Syne', sans-serif",
+              fontWeight: "700",
+              color: "rgba(255,255,255,0.92)",
+              lineHeight: "1.4",
+            }}
+          >
+            {noticia.titulo}
+          </h3>
+
+          {expanded && (
+            <div style={{ animation: "fadeIn 0.3s ease" }}>
+              <p
+                style={{
+                  margin: "0 0 14px 0",
+                  fontSize: "13.5px",
+                  color: "rgba(255,255,255,0.6)",
+                  lineHeight: "1.6",
+                  fontFamily: "'DM Sans', sans-serif",
+                }}
+              >
+                {noticia.resumo}
+              </p>
+              <a
+                href={noticia.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  fontSize: "12px",
+                  color: color,
+                  textDecoration: "none",
+                  fontFamily: "'Space Mono', monospace",
+                  background: `${color}10`,
+                  border: `1px solid ${color}30`,
+                  padding: "6px 12px",
+                  borderRadius: "6px",
+                  transition: "all 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = `${color}20`;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = `${color}10`;
+                }}
+              >
+                ↗ Ler notícia completa
+              </a>
+            </div>
+          )}
+
+          {!expanded && (
+            <p
+              style={{
+                margin: 0,
+                fontSize: "13px",
+                color: "rgba(255,255,255,0.4)",
+                fontFamily: "'DM Sans', sans-serif",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {noticia.resumo}
+            </p>
+          )}
+        </div>
+
+        <div
+          style={{
+            fontSize: "12px",
+            color: "rgba(255,255,255,0.2)",
+            transition: "transform 0.2s",
+            transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
+            flexShrink: 0,
+          }}
+        >
+          ▾
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function NewsAgent() {
+  const [noticias, setNoticias] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [expandedIndex, setExpandedIndex] = useState(null);
+  const [log, setLog] = useState([]);
+  const [hora, setHora] = useState(new Date());
+  const [fetched, setFetched] = useState(false);
+  const logRef = useRef(null);
+
+  useEffect(() => {
+    const timer = setInterval(() => setHora(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    if (logRef.current) {
+      logRef.current.scrollTop = logRef.current.scrollHeight;
+    }
+  }, [log]);
+
+  const addLog = (msg, type = "info") => {
+    const colors = {
+      info: "rgba(255,255,255,0.4)",
+      success: "#06d6a0",
+      error: "#ff4d6d",
+      warn: "#ffd60a",
+      system: "#818cf8",
+    };
+    setLog((prev) => [
+      ...prev,
+      { msg, color: colors[type], id: Date.now() + Math.random() },
+    ]);
+  };
+
+  const buscarNoticia = async (topico, index) => {
+    addLog(`[${index + 1}/${5}] Pesquisando: "${topico}"`, "system");
+
+    try {
+      // GIDEON UPDATE: Chamando a rota interna gratuita da Vercel
+      const response = await fetch("/api/noticias", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ topico }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Falha na matriz (Status ${response.status})`);
+      }
+
+      const data = await response.json();
+
+      if (data.erro) {
+        addLog(`✗ ${data.erro}`, "warn");
+        return null;
+      }
+
+      addLog(`✓ "${data.titulo.substring(0, 50)}..."`, "success");
+      return data;
+    } catch (err) {
+      addLog(`✗ Erro ao buscar "${topico}": ${err.message}`, "error");
+      return null;
+    }
+  };
+
+  const buscarTodasNoticias = async () => {
+    setLoading(true);
+    setNoticias([]);
+    setLog([]);
+    setFetched(false);
+    setExpandedIndex(null);
+
+    addLog("▶ AGENTE TECH NEWS INICIADO", "system");
+    addLog(
+      `⏰ ${hora.toLocaleString("pt-BR")} — Buscando 5 notícias...`,
+      "info"
+    );
+    addLog("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", "info");
+
+    const topicsSelecionados = [...TOPICS]
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 5);
+
+    const resultados = [];
+    for (let i = 0; i < topicsSelecionados.length; i++) {
+      const noticia = await buscarNoticia(topicsSelecionados[i], i);
+      if (noticia) {
+        resultados.push(noticia);
+        setNoticias([...resultados]);
+      }
+      if (i < topicsSelecionados.length - 1) {
+        await new Promise((r) => setTimeout(r, 800));
+      }
+    }
+
+    addLog("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", "info");
+    addLog(
+      `✅ ${resultados.length} notícias carregadas. Bom dia!`,
+      "success"
+    );
+    setLoading(false);
+    setFetched(true);
+  };
+
+  const handleExpand = (index) => {
+    setExpandedIndex(expandedIndex === index ? null : index);
+  };
+
+  const greetingHour = hora.getHours();
+  const greeting =
+    greetingHour < 12
+      ? "Bom dia"
+      : greetingHour < 18
+        ? "Boa tarde"
+        : "Boa noite";
+
+  return (
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap');
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body { background: #080b14; }
+        
+        @keyframes slideIn {
+          from { opacity: 0; transform: translateX(-16px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.3; }
+        }
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+      `}</style>
+
+      <div
+        style={{
+          minHeight: "100vh",
+          background: "#080b14",
+          color: "white",
+          fontFamily: "'DM Sans', sans-serif",
+          position: "relative",
+          overflow: "hidden",
+        }}
+      >
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            backgroundImage: `
+              linear-gradient(rgba(99,102,241,0.03) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(99,102,241,0.03) 1px, transparent 1px)
+            `,
+            backgroundSize: "40px 40px",
+            pointerEvents: "none",
+          }}
+        />
+
+        <div
+          style={{
+            position: "fixed",
+            top: "-200px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            width: "600px",
+            height: "400px",
+            background:
+              "radial-gradient(ellipse, rgba(99,102,241,0.12) 0%, transparent 70%)",
+            pointerEvents: "none",
+          }}
+        />
+
+        <div
+          style={{
+            maxWidth: "760px",
+            margin: "0 auto",
+            padding: "40px 20px 60px",
+            position: "relative",
+          }}
+        >
+          <div style={{ marginBottom: "40px" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: "24px",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "12px",
+                }}
+              >
+                <div
+                  style={{
+                    width: "36px",
+                    height: "36px",
+                    background: "linear-gradient(135deg, #6366f1, #818cf8)",
+                    borderRadius: "10px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "18px",
+                  }}
+                >
+                  ◈
+                </div>
+                <div>
+                  <div
+                    style={{
+                      fontSize: "11px",
+                      fontFamily: "'Space Mono', monospace",
+                      color: "#6366f1",
+                      letterSpacing: "0.12em",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    Tech News Agent
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "20px",
+                      fontFamily: "'Syne', sans-serif",
+                      fontWeight: "800",
+                      color: "white",
+                      lineHeight: 1.1,
+                    }}
+                  >
+                    {greeting}, João Heitor
+                  </div>
+                </div>
+              </div>
+
+              <div
+                style={{
+                  textAlign: "right",
+                  fontFamily: "'Space Mono', monospace",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: "22px",
+                    color: "white",
+                    fontWeight: "700",
+                  }}
+                >
+                  {hora.toLocaleTimeString("pt-BR", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </div>
+                <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)" }}>
+                  {hora.toLocaleDateString("pt-BR", {
+                    weekday: "short",
+                    day: "2-digit",
+                    month: "short",
+                  })}
+                </div>
+              </div>
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "6px",
+                marginBottom: "24px",
+              }}
+            >
+              {[
+                "Google AI",
+                "Microsoft",
+                "Anthropic",
+                "GitHub",
+                "OpenAI",
+                "Gemini",
+                "Meta AI",
+                "Apple",
+              ].map((t) => (
+                <span
+                  key={t}
+                  style={{
+                    fontSize: "11px",
+                    fontFamily: "'Space Mono', monospace",
+                    color: "rgba(255,255,255,0.35)",
+                    background: "rgba(255,255,255,0.04)",
+                    border: "1px solid rgba(255,255,255,0.08)",
+                    padding: "3px 10px",
+                    borderRadius: "20px",
+                  }}
+                >
+                  {t}
+                </span>
+              ))}
+            </div>
+
+            <button
+              onClick={buscarTodasNoticias}
+              disabled={loading}
+              style={{
+                width: "100%",
+                padding: "14px 24px",
+                background: loading
+                  ? "rgba(99,102,241,0.15)"
+                  : "linear-gradient(135deg, #6366f1, #818cf8)",
+                border: loading ? "1px solid rgba(99,102,241,0.3)" : "none",
+                borderRadius: "12px",
+                color: "white",
+                fontSize: "14px",
+                fontFamily: "'Syne', sans-serif",
+                fontWeight: "700",
+                cursor: loading ? "not-allowed" : "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "10px",
+                transition: "all 0.2s",
+                letterSpacing: "0.02em",
+              }}
+              onMouseEnter={(e) => {
+                if (!loading) e.currentTarget.style.transform = "translateY(-1px)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "translateY(0)";
+              }}
+            >
+              {loading ? (
+                <>
+                  <span
+                    style={{
+                      display: "inline-block",
+                      width: "14px",
+                      height: "14px",
+                      border: "2px solid rgba(255,255,255,0.3)",
+                      borderTopColor: "white",
+                      borderRadius: "50%",
+                      animation: "spin 0.8s linear infinite",
+                    }}
+                  />
+                  Buscando notícias com IA...
+                </>
+              ) : (
+                <>◈ {fetched ? "Atualizar Notícias" : "Buscar Notícias do Dia"}</>
+              )}
+            </button>
+          </div>
+
+          {log.length > 0 && (
+            <div
+              ref={logRef}
+              style={{
+                background: "rgba(0,0,0,0.4)",
+                border: "1px solid rgba(255,255,255,0.06)",
+                borderRadius: "10px",
+                padding: "16px",
+                marginBottom: "24px",
+                maxHeight: "140px",
+                overflowY: "auto",
+                fontFamily: "'Space Mono', monospace",
+              }}
+            >
+              {log.map((l) => (
+                <div
+                  key={l.id}
+                  style={{
+                    fontSize: "11px",
+                    color: l.color,
+                    marginBottom: "3px",
+                    animation: "fadeIn 0.2s ease",
+                  }}
+                >
+                  {l.msg}
+                </div>
+              ))}
+              {loading && (
+                <div
+                  style={{
+                    fontSize: "11px",
+                    color: "#6366f1",
+                    animation: "pulse 1s infinite",
+                  }}
+                >
+                  ▌
+                </div>
+              )}
+            </div>
+          )}
+
+          {noticias.length > 0 && (
+            <div>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  marginBottom: "20px",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: "11px",
+                    fontFamily: "'Space Mono', monospace",
+                    color: "rgba(255,255,255,0.3)",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.1em",
+                  }}
+                >
+                  {noticias.length} notícia{noticias.length !== 1 ? "s" : ""} encontrada{noticias.length !== 1 ? "s" : ""}
+                </div>
+                <div
+                  style={{
+                    flex: 1,
+                    height: "1px",
+                    background: "rgba(255,255,255,0.06)",
+                  }}
+                />
+                <div
+                  style={{
+                    fontSize: "11px",
+                    fontFamily: "'Space Mono', monospace",
+                    color: "rgba(255,255,255,0.2)",
+                  }}
+                >
+                  clique para expandir
+                </div>
+              </div>
+
+              {noticias.map((n, i) => (
+                <NewsCard
+                  key={i}
+                  noticia={n}
+                  index={i}
+                  expanded={expandedIndex === i}
+                  onExpand={handleExpand}
+                />
+              ))}
+            </div>
+          )}
+
+          {!loading && noticias.length === 0 && !fetched && (
+            <div
+              style={{
+                textAlign: "center",
+                padding: "60px 20px",
+                color: "rgba(255,255,255,0.2)",
+              }}
+            >
+              <div style={{ fontSize: "48px", marginBottom: "16px" }}>◈</div>
+              <div
+                style={{
+                  fontFamily: "'Syne', sans-serif",
+                  fontSize: "16px",
+                  color: "rgba(255,255,255,0.4)",
+                  marginBottom: "8px",
+                }}
+              >
+                Pronto para começar o dia
+              </div>
+              <div
+                style={{
+                  fontFamily: "'Space Mono', monospace",
+                  fontSize: "12px",
+                }}
+              >
+                Clique no botão acima para buscar as notícias
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </>
+  );
+}
