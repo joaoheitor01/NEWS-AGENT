@@ -41,6 +41,7 @@ module.exports = async function handler(req, res) {
     let noticias;
     let briefing = null;
     let curadoEm = 'heuristica';
+    let iaErro = null;
 
     if (apiKey) {
       try {
@@ -49,6 +50,7 @@ module.exports = async function handler(req, res) {
         briefing = r.briefing;
         curadoEm = 'ia';
       } catch (err) {
+        iaErro = err.message;
         console.error('[noticias] IA falhou, usando heurística:', err.message);
         noticias = curadoriaHeuristica(candidatos);
       }
@@ -69,6 +71,7 @@ module.exports = async function handler(req, res) {
       totalItensAnalisados: candidatos.length,
       topicFilter: topic || 'todos',
       curadoria: curadoEm,
+      _diag: { temChave: !!apiKey, iaErro: iaErro ? String(iaErro).slice(0, 200) : null },
     });
   } catch (error) {
     console.error('[noticias] erro crítico:', error.message);
