@@ -47,7 +47,7 @@ const FEEDS = [
   { url: 'https://jornal.usp.br/feed/',              nome: 'Jornal da USP',  pais: 'BR', peso: 2 },
   { url: 'https://agencia.fapesp.br/rss',            nome: 'Agência FAPESP', pais: 'BR', peso: 1 },
   { url: 'https://news.mit.edu/rss/feed',            nome: 'MIT News',       pais: 'US', peso: 2 },
-  { url: 'https://news.stanford.edu/feed',           nome: 'Stanford',       pais: 'US', peso: 1 },
+  { url: 'https://news.stanford.edu/feed/',          nome: 'Stanford',       pais: 'US', peso: 1 },
   { url: 'https://news.harvard.edu/gazette/feed/',   nome: 'Harvard Gazette', pais: 'US', peso: 1 },
   { url: 'https://news.berkeley.edu/feed/',          nome: 'UC Berkeley',    pais: 'US', peso: 1 },
   { url: 'https://www.sciencedaily.com/rss/computers_math/artificial_intelligence.xml', nome: 'ScienceDaily', pais: 'US', peso: 1 },
