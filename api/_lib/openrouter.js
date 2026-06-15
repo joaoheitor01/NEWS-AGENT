@@ -10,6 +10,7 @@ const MODEL = process.env.OPENROUTER_MODEL || 'openrouter/auto';
 
 // Fallbacks fixos (caso a descoberta dinâmica falhe).
 const HARDCODED_FREE = [
+  'google/gemma-4-26b-a4b-it:free',
   'meta-llama/llama-3.3-70b-instruct:free',
   'google/gemini-2.0-flash-exp:free',
   'deepseek/deepseek-chat-v3-0324:free',
@@ -59,7 +60,7 @@ async function listaModelos(apiKey) {
 // Chama o OpenRouter tentando uma lista de modelos até um funcionar.
 // Limitado por um prazo total (deadlineMs) e timeout por modelo, para que a
 // função serverless sempre retorne a tempo (cai na heurística se estourar).
-async function chamarOpenRouter(apiKey, { messages, maxTokens = 3000, temperature = 0.4, deadlineMs = 22000, porModeloMs = 12000 }) {
+async function chamarOpenRouter(apiKey, { messages, maxTokens = 3000, temperature = 0.4, deadlineMs = 42000, porModeloMs = 40000 }) {
   const inicio = Date.now();
   const erros = [];
   for (const model of await listaModelos(apiKey)) {
@@ -109,7 +110,7 @@ async function curadoriaIA(apiKey, candidatos) {
 Seu método: (1) priorize fatos REAIS e RECENTES (não hype); (2) cruze e valide as fontes;
 (3) escreva em português com foco no IMPACTO PRÁTICO para quem trabalha com tecnologia.
 
-A partir da lista abaixo, selecione de 10 a 12 notícias mais importantes e DIVERSIFICADAS
+A partir da lista abaixo, selecione de 8 a 10 notícias mais importantes e DIVERSIFICADAS
 (temas e fontes variados; priorize portais BR e fontes primárias como OpenAI, Anthropic,
 Google DeepMind, universidades).
 
@@ -132,9 +133,8 @@ Retorne APENAS um objeto JSON válido (sem markdown, sem crases, sem texto fora 
       "titulo": "título claro em português",
       "resumo": "2 a 3 frases: o que aconteceu e por que importa",
       "pontos": [
-        { "rotulo": "O fato principal", "texto": "1 frase" },
-        { "rotulo": "Desdobramentos técnicos", "texto": "1 frase" },
-        { "rotulo": "Por que importa", "texto": "1 frase" }
+        { "rotulo": "O fato principal", "texto": "1 frase curta" },
+        { "rotulo": "Por que importa", "texto": "1 frase curta" }
       ],
       "fonte": "nome do veículo, exatamente como na lista",
       "link": "URL original SEM alteração",
@@ -149,7 +149,7 @@ Retorne APENAS um objeto JSON válido (sem markdown, sem crases, sem texto fora 
 
   const texto = await chamarOpenRouter(apiKey, {
     messages: [{ role: 'user', content: prompt }],
-    maxTokens: 2200,
+    maxTokens: 1500,
   });
 
   const match = texto.match(/\{[\s\S]*\}/);
