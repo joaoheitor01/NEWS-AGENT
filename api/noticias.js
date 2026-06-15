@@ -5,7 +5,7 @@
 // Aceita POST { topic } e também GET ?topic= para facilitar testes/cache.
 // -----------------------------------------------------------------------------
 const { coletarItens, selecionarCandidatos, curadoriaHeuristica } = require('./_lib/curate');
-const { curadoriaIA } = require('./_lib/openrouter');
+const { curadoriaIA, getApiKey } = require('./_lib/openrouter');
 const { TOPICS } = require('./_lib/feeds');
 
 module.exports = async function handler(req, res) {
@@ -37,7 +37,7 @@ module.exports = async function handler(req, res) {
     const candidatos = selecionarCandidatos(itens, topic, 40);
     console.log(`[noticias] feeds ${feedsOk}/${totalFeeds}, itens ${itens.length}, candidatos ${candidatos.length}`);
 
-    const apiKey = process.env.OPENROUTER_API_KEY;
+    const apiKey = getApiKey();
     let noticias;
     let briefing = null;
     let curadoEm = 'heuristica';
