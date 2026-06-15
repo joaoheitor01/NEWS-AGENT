@@ -1,22 +1,22 @@
-// Busca textual instantânea sobre as notícias já carregadas.
+// Busca textual instantânea (estilo editorial, sublinhado discreto).
 export default function SearchBar({ value, onChange, count }) {
   return (
-    <div className="flex items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2.5 focus-within:border-[var(--color-brand)] transition-colors">
-      <span className="material-symbols-outlined text-xl text-[var(--color-ink-faint)]">search</span>
+    <div className="flex items-center gap-2 border-b border-[var(--color-rule)] py-1.5 focus-within:border-[var(--color-accent)]">
+      <span className="material-symbols-outlined text-[20px] text-[var(--color-ink-faint)]">search</span>
       <input
         type="search"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="Filtrar notícias carregadas…"
-        className="flex-1 bg-transparent text-sm text-[var(--color-ink)] placeholder:text-[var(--color-ink-faint)] focus:outline-none"
-        aria-label="Filtrar notícias"
+        placeholder="Buscar nas notícias…"
+        className="flex-1 bg-transparent font-[family-name:var(--font-sans)] text-[14px] text-[var(--color-ink)] placeholder:text-[var(--color-ink-faint)] focus:outline-none"
+        aria-label="Buscar nas notícias"
       />
       {value && (
         <>
-          <span className="text-xs text-[var(--color-ink-faint)]">{count}</span>
+          <span className="font-[family-name:var(--font-sans)] text-[12px] text-[var(--color-ink-faint)]">{count}</span>
           <button
             onClick={() => onChange('')}
-            className="material-symbols-outlined text-lg text-[var(--color-ink-faint)] hover:text-[var(--color-ink)]"
+            className="material-symbols-outlined text-[18px] text-[var(--color-ink-faint)] hover:text-[var(--color-ink)]"
             aria-label="Limpar busca"
           >
             close
