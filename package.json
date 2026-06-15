@@ -1,7 +1,8 @@
 {
-  "name": "new-agent",
+  "name": "tech-news-agent",
   "private": true,
-  "version": "0.0.0",
+  "version": "2.0.0",
+  "description": "Agregador inteligente de notícias de tecnologia BR + mundo, com curadoria por IA.",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -19,6 +20,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
+    "@tailwindcss/vite": "^4.3.1",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
