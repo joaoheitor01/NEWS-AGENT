@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 132 96" width="132" height="96">
+  <style>
+    .ink { fill: #121212; }
+    .stroke { stroke: #121212; }
+    @media (prefers-color-scheme: dark) {
+      .ink { fill: #f4f4f2; }
+      .stroke { stroke: #f4f4f2; }
+    }
+    text { font-family: Georgia, 'Times New Roman', 'Times', serif; font-weight: 700; }
+  </style>
+  <!-- órbita / sinal -->
+  <path class="stroke" d="M8 60 C 44 46, 88 46, 124 40" fill="none" stroke-width="1.6"/>
+  <circle class="ink" cx="8" cy="60" r="3.4"/>
+  <circle class="ink" cx="124" cy="40" r="3.4"/>
+  <!-- monograma TNA -->
+  <text class="ink" x="66" y="66" text-anchor="middle" font-size="58" letter-spacing="-7">TNA</text>
+</svg>

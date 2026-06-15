@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import Masthead from './components/Masthead';
+import Hero from './components/Hero';
 import NewsBlock from './components/NewsBlock';
 import SkeletonCard from './components/SkeletonCard';
 import SearchBar from './components/SearchBar';
@@ -167,11 +168,14 @@ export default function App() {
       {loading && <div className="h-0.5 w-full animate-pulse bg-[var(--color-accent)]" />}
 
       <main className="mx-auto max-w-6xl px-4 pb-24 pt-5">
-        {/* Dateline / saudação (apenas na capa) */}
+        {/* Capa (hero) — apenas na home */}
         {isHome && (
-          <p className="mb-5 text-center font-[family-name:var(--font-serif)] text-[15px] italic text-[var(--color-ink-muted)]">
-            {saudacao(hora)}, João Heitor — as notícias de tecnologia que importam hoje.
-          </p>
+          <div className="mb-8">
+            <Hero />
+            <p className="mt-4 text-center font-[family-name:var(--font-serif)] text-[15px] italic text-[var(--color-ink-muted)]">
+              {saudacao(hora)}, João Heitor.
+            </p>
+          </div>
         )}
 
         {/* Cabeçalho da seção */}

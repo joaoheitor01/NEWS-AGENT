@@ -1,4 +1,5 @@
 import { TOPICS } from '../lib/topics';
+import Logo from './Logo';
 
 // Cabeçalho/nameplate de jornal + navegação horizontal de seções (sticky).
 export default function Masthead({ view, onNavigate, hora, savedCount, theme, onToggleTheme }) {
@@ -21,10 +22,13 @@ export default function Masthead({ view, onNavigate, hora, savedCount, theme, on
         </span>
         <button
           onClick={() => onNavigate('home')}
-          className="font-[family-name:var(--font-serif)] text-2xl sm:text-3xl font-bold tracking-[-0.01em] text-[var(--color-ink)]"
-          aria-label="Início"
+          className="flex items-center gap-2.5 text-[var(--color-ink)]"
+          aria-label="Início — Tech News Agent"
         >
-          Tech News Agent
+          <Logo className="h-7 w-auto sm:h-8" />
+          <span className="font-[family-name:var(--font-serif)] text-2xl font-bold tracking-[-0.01em] sm:text-3xl">
+            Tech News Agent
+          </span>
         </button>
         <div className="flex w-10 sm:w-40 items-center justify-end">
           <button
