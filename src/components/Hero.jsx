@@ -5,10 +5,15 @@ export default function Hero() {
     <section className="relative overflow-hidden rounded-sm border border-[var(--color-border)] bg-[#0a0a0a] text-white">
       {/* Fundo: imagem à direita + degradê para a esquerda (legibilidade do texto) */}
       <div className="absolute inset-0" aria-hidden="true">
-        <div
-          className="absolute inset-0 bg-cover bg-no-repeat"
-          style={{ backgroundImage: 'url(/hero.jpg)', backgroundPosition: 'right center' }}
-        />
+        <picture>
+          <source srcSet="/hero.webp" type="image/webp" />
+          <img
+            src="/hero.jpg"
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover"
+            style={{ objectPosition: 'right center' }}
+          />
+        </picture>
         <div
           className="absolute inset-0"
           style={{
