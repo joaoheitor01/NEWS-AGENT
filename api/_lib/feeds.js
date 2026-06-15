@@ -13,7 +13,6 @@ const FEEDS = [
   { url: 'https://canaltech.com.br/rss/',            nome: 'Canaltech',      pais: 'BR', peso: 3 },
   { url: 'https://olhardigital.com.br/feed/',        nome: 'Olhar Digital',  pais: 'BR', peso: 3 },
   { url: 'https://tecnoblog.net/feed/',              nome: 'Tecnoblog',      pais: 'BR', peso: 3 },
-  { url: 'https://www.tecmundo.com.br/rss',          nome: 'TecMundo',       pais: 'BR', peso: 3 },
   { url: 'https://www.showmetech.com.br/feed/',      nome: 'Show Me Tech',   pais: 'BR', peso: 2 },
   { url: 'https://meiobit.com/feed/',                nome: 'Meio Bit',       pais: 'BR', peso: 2 },
   { url: 'https://www.adrenaline.com.br/feed/',      nome: 'Adrenaline',     pais: 'BR', peso: 2 },
