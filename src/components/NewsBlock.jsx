@@ -61,7 +61,7 @@ export default function NewsBlock({ noticia, variant = 'standard', expanded, onT
         aria-label={isSaved ? 'Remover dos salvos' : 'Salvar'}
         title={isSaved ? 'Remover dos salvos' : 'Salvar'}
       >
-        <span className="material-symbols-outlined text-[18px]"
+        <span translate="no" className="material-symbols-outlined text-[18px]"
           style={{ fontVariationSettings: `'FILL' ${isSaved ? 1 : 0}` }}>
           bookmark
         </span>
@@ -73,7 +73,7 @@ export default function NewsBlock({ noticia, variant = 'standard', expanded, onT
           aria-label="Compartilhar"
           title="Compartilhar"
         >
-          <span className="material-symbols-outlined text-[18px]">share</span>
+          <span translate="no" className="material-symbols-outlined text-[18px]">share</span>
         </button>
       )}
     </div>
