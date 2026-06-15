@@ -4,7 +4,7 @@
 // Usa as mesmas libs do endpoint principal (fonte única de verdade).
 // -----------------------------------------------------------------------------
 const { coletarItens, selecionarCandidatos, curadoriaHeuristica } = require('./_lib/curate');
-const { chamarOpenRouter } = require('./_lib/openrouter');
+const { chamarOpenRouter, getApiKey } = require('./_lib/openrouter');
 
 const NTFY_TOPIC = process.env.NTFY_TOPIC || 'aion_news_jh_2026';
 
@@ -24,7 +24,7 @@ module.exports = async function handler(req, res) {
 
     // Escolhe a melhor notícia: IA se houver chave, senão a de maior score.
     let noticia;
-    const apiKey = process.env.OPENROUTER_API_KEY;
+    const apiKey = getApiKey();
 
     if (apiKey) {
       try {

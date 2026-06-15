@@ -8,6 +8,16 @@ const { detectarTopico } = require('./curate');
 const MODEL = process.env.OPENROUTER_MODEL || 'openrouter/auto';
 const REFERER = process.env.SITE_URL || 'https://tech-news-agent.vercel.app';
 
+// Lê a chave aceitando variações de nome (tolera o typo comum "OPENROUT_API_KEY").
+function getApiKey() {
+  return (
+    process.env.OPENROUTER_API_KEY ||
+    process.env.OPENROUT_API_KEY ||
+    process.env.OPEN_ROUTER_API_KEY ||
+    ''
+  );
+}
+
 async function chamarOpenRouter(apiKey, { messages, maxTokens = 3000, temperature = 0.4 }) {
   const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
     method: 'POST',
@@ -119,4 +129,4 @@ Retorne APENAS um objeto JSON válido (sem markdown, sem crases, sem texto fora 
   return { briefing, noticias: limpa };
 }
 
-module.exports = { curadoriaIA, chamarOpenRouter, MODEL };
+module.exports = { curadoriaIA, chamarOpenRouter, getApiKey, MODEL };
