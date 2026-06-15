@@ -24,6 +24,13 @@ function apiDevBridge() {
           return
         }
 
+        // Disponibiliza a query string (para handlers que usam req.query, ex.: GET ?topic=)
+        try {
+          req.query = Object.fromEntries(new URL(req.url || '', 'http://localhost').searchParams)
+        } catch {
+          req.query = {}
+        }
+
         if (['POST', 'PUT', 'PATCH'].includes(req.method || '')) {
           try {
             const chunks = []

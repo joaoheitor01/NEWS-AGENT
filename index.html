@@ -14,6 +14,21 @@
     <title>Tech News Agent</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
+    <!-- Define o tema antes da pintura (evita flash) -->
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem('tna_theme');
+          var dark = t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          if (dark) {
+            document.documentElement.classList.add('dark');
+            var m = document.querySelector('meta[name="theme-color"]');
+            if (m) m.setAttribute('content', '#121212');
+          }
+        } catch (e) {}
+      })();
+    </script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

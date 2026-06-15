@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { topicMeta } from '../lib/topics';
-import { tempoRelativo } from '../lib/format';
+import { tempoRelativo, linkSeguro } from '../lib/format';
 
 // Bloco editorial de notícia. variant: 'lead' (destaque) | 'standard'.
 export default function NewsBlock({ noticia, variant = 'standard', expanded, onToggle, onSave, isSaved, onShare }) {
@@ -8,6 +8,7 @@ export default function NewsBlock({ noticia, variant = 'standard', expanded, onT
   const secao = topicMeta(noticia.topico).long;
   const temImagem = noticia.imagem && !imgErro;
   const isLead = variant === 'lead';
+  const href = linkSeguro(noticia.link);
 
   const Kicker = (
     <div className="flex items-center gap-2 font-[family-name:var(--font-sans)] text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--color-accent)]">
@@ -42,15 +43,17 @@ export default function NewsBlock({ noticia, variant = 'standard', expanded, onT
 
   const Acoes = (
     <div className="mt-1 flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-      <a
-        href={noticia.link}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="font-[family-name:var(--font-sans)] text-[12px] font-semibold uppercase tracking-wide text-[var(--color-accent)] hover:underline"
-      >
-        Ler artigo ↗
-      </a>
-      <span className="mx-1 text-[var(--color-border)]">|</span>
+      {href && (
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-[family-name:var(--font-sans)] text-[12px] font-semibold uppercase tracking-wide text-[var(--color-accent)] hover:underline"
+        >
+          Ler artigo ↗
+        </a>
+      )}
+      {href && <span className="mx-1 text-[var(--color-border)]">|</span>}
       <button
         onClick={() => onSave(noticia)}
         className="flex items-center text-[var(--color-ink-faint)] transition-colors hover:text-[var(--color-ink)]"

@@ -70,6 +70,24 @@ body {
 /* Pequeno traço decorativo (nameplate / seções) */
 .rule-strong { border-color: var(--color-rule); }
 
+/* ===== Modo escuro (classe .dark no <html>) — sobrescreve as variáveis ===== */
+.dark {
+  --color-bg: #121212;
+  --color-surface: #1a1a1a;
+  --color-section: #202020;
+  --color-border: #2e2e2e;
+  --color-rule: #ededed;
+
+  --color-ink: #ededeb;
+  --color-ink-muted: #b2b2ac;
+  --color-ink-faint: #87877f;
+
+  --color-accent: #8fb6d6;
+  --color-danger: #ef8d8d;
+}
+.dark ::selection { background: #2c3d49; color: var(--color-ink); }
+.dark *::-webkit-scrollbar-thumb { background: #3a3a3a; }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

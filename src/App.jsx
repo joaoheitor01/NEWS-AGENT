@@ -25,12 +25,27 @@ export default function App() {
   const [saved, setSaved] = useState(() => getSaved());
   const [hora, setHora] = useState(new Date());
   const [toast, setToast] = useState(null);
+  const [theme, setTheme] = useState(() =>
+    typeof document !== 'undefined' && document.documentElement.classList.contains('dark') ? 'dark' : 'light'
+  );
   const abortRef = useRef(null);
   const feedRef = useRef(feed);
 
   useEffect(() => {
     const t = setInterval(() => setHora(new Date()), 30000);
     return () => clearInterval(t);
+  }, []);
+
+  const toggleTheme = useCallback(() => {
+    setTheme((prev) => {
+      const next = prev === 'dark' ? 'light' : 'dark';
+      const root = document.documentElement;
+      root.classList.toggle('dark', next === 'dark');
+      try { localStorage.setItem('tna_theme', next); } catch { /* ignore */ }
+      const m = document.querySelector('meta[name="theme-color"]');
+      if (m) m.setAttribute('content', next === 'dark' ? '#121212' : '#ffffff');
+      return next;
+    });
   }, []);
 
   const flash = useCallback((msg) => {
@@ -148,7 +163,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen">
-      <Masthead view={view} onNavigate={navigate} hora={hora} savedCount={saved.length} />
+      <Masthead view={view} onNavigate={navigate} hora={hora} savedCount={saved.length} theme={theme} onToggleTheme={toggleTheme} />
       {loading && <div className="h-0.5 w-full animate-pulse bg-[var(--color-accent)]" />}
 
       <main className="mx-auto max-w-6xl px-4 pb-24 pt-5">
@@ -178,7 +193,7 @@ export default function App() {
             <button
               onClick={() => buscar(view)}
               disabled={loading}
-              className="mb-1 flex items-center gap-1.5 border border-[var(--color-rule)] px-3.5 py-1.5 font-[family-name:var(--font-sans)] text-[12px] font-semibold uppercase tracking-wide text-[var(--color-ink)] transition-colors hover:bg-[var(--color-ink)] hover:text-white disabled:opacity-40"
+              className="mb-1 flex items-center gap-1.5 border border-[var(--color-rule)] px-3.5 py-1.5 font-[family-name:var(--font-sans)] text-[12px] font-semibold uppercase tracking-wide text-[var(--color-ink)] transition-colors hover:bg-[var(--color-ink)] hover:text-[var(--color-bg)] disabled:opacity-40"
             >
               <span className={`material-symbols-outlined text-[16px] ${loading ? 'animate-spin' : ''}`}>
                 {loading ? 'progress_activity' : 'refresh'}
@@ -240,7 +255,7 @@ export default function App() {
             {!isSalvos && !search && (
               <button
                 onClick={() => buscar(view)}
-                className="mt-1 border border-[var(--color-rule)] px-4 py-2 font-[family-name:var(--font-sans)] text-[12px] font-semibold uppercase tracking-wide transition-colors hover:bg-[var(--color-ink)] hover:text-white"
+                className="mt-1 border border-[var(--color-rule)] px-4 py-2 font-[family-name:var(--font-sans)] text-[12px] font-semibold uppercase tracking-wide transition-colors hover:bg-[var(--color-ink)] hover:text-[var(--color-bg)]"
               >
                 Atualizar agora
               </button>
@@ -276,7 +291,7 @@ export default function App() {
       </main>
 
       {toast && (
-        <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 border border-[var(--color-rule)] bg-[var(--color-ink)] px-5 py-2.5 font-[family-name:var(--font-sans)] text-[13px] font-medium text-white shadow-lg animate-[var(--animate-fade-up)]">
+        <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 border border-[var(--color-rule)] bg-[var(--color-ink)] px-5 py-2.5 font-[family-name:var(--font-sans)] text-[13px] font-medium text-[var(--color-bg)] shadow-lg animate-[var(--animate-fade-up)]">
           {toast}
         </div>
       )}

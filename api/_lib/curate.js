@@ -62,9 +62,10 @@ async function coletarItens({ porFeed = 12 } = {}) {
     fontesUsadas.push(fonte.nome);
     (feed.items || []).slice(0, porFeed).forEach((item) => {
       const resumo = limparTexto(item.contentSnippet || item.summary || item.content || '');
+      const link = /^https?:\/\//i.test(item.link || '') ? item.link : '';
       itens.push({
         titulo: limparTexto(item.title || ''),
-        link: item.link || '',
+        link,
         resumoOriginal: resumo.slice(0, 500),
         fonte: fonte.nome,
         pais: fonte.pais,

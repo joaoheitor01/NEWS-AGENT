@@ -42,6 +42,15 @@ const FEEDS = [
   { url: 'https://venturebeat.com/category/ai/feed/', nome: 'VentureBeat AI', pais: 'US', peso: 1 },
   // Anthropic não publica RSS oficial; usamos um espelho comunitário mantido.
   { url: 'https://raw.githubusercontent.com/taobojlen/anthropic-rss-feed/main/anthropic_news_rss.xml', nome: 'Anthropic', pais: 'US', peso: 2 },
+
+  // === UNIVERSIDADES E PESQUISA (Brasil + exterior) ===
+  { url: 'https://jornal.usp.br/feed/',              nome: 'Jornal da USP',  pais: 'BR', peso: 2 },
+  { url: 'https://agencia.fapesp.br/rss',            nome: 'Agência FAPESP', pais: 'BR', peso: 1 },
+  { url: 'https://news.mit.edu/rss/feed',            nome: 'MIT News',       pais: 'US', peso: 2 },
+  { url: 'https://news.stanford.edu/feed',           nome: 'Stanford',       pais: 'US', peso: 1 },
+  { url: 'https://news.harvard.edu/gazette/feed/',   nome: 'Harvard Gazette', pais: 'US', peso: 1 },
+  { url: 'https://news.berkeley.edu/feed/',          nome: 'UC Berkeley',    pais: 'US', peso: 1 },
+  { url: 'https://www.sciencedaily.com/rss/computers_math/artificial_intelligence.xml', nome: 'ScienceDaily', pais: 'US', peso: 1 },
 ];
 
 // Tópicos: a CHAVE deve casar com `src/lib/topics.js` (frontend).
@@ -55,6 +64,17 @@ const TOPICS = {
       'modelo de linguagem', 'ia generativa', 'generative ai', 'chatbot', 'chatgpt', 'gpt',
       'gemini', 'copilot', 'claude', 'openai', 'anthropic', 'mistral', 'llama', 'nlp',
       'visão computacional', 'agente de ia', 'ai agent', 'transformer',
+    ],
+  },
+  ciencia: {
+    label: 'Ciência e Pesquisa',
+    keywords: [
+      'pesquisa', 'pesquisador', 'pesquisadores', 'universidade', 'estudo', 'cientista',
+      'cientistas', 'ciência', 'ciencia', 'científic', 'cientific', 'descoberta',
+      'laboratório', 'laboratorio', 'usp', 'unicamp', 'fapesp', 'mit', 'stanford',
+      'harvard', 'berkeley', 'oxford', 'cambridge', 'doutorado', 'mestrado', 'paper',
+      'física', 'fisica', 'quântica', 'quantica', 'biotecnologia', 'astronomia',
+      'neurociência', 'genoma', 'clima', 'energia limpa', 'fusão nuclear', 'fusao nuclear',
     ],
   },
   dev: {

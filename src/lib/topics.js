@@ -7,6 +7,7 @@
 
 export const TOPICS = {
   ia:       { label: 'IA',        long: 'Inteligência Artificial' },
+  ciencia:  { label: 'Ciência',   long: 'Ciência e Pesquisa' },
   dev:      { label: 'Dev',       long: 'Desenvolvimento' },
   hardware: { label: 'Hardware',  long: 'Hardware' },
   chips:    { label: 'Chips',     long: 'Semicondutores' },

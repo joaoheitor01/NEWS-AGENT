@@ -9,6 +9,13 @@ const { chamarOpenRouter } = require('./_lib/openrouter');
 const NTFY_TOPIC = process.env.NTFY_TOPIC || 'aion_news_jh_2026';
 
 module.exports = async function handler(req, res) {
+  // Proteção: se CRON_SECRET estiver definido, exige o header Authorization.
+  // A Vercel envia "Authorization: Bearer <CRON_SECRET>" automaticamente nos crons.
+  const cronSecret = process.env.CRON_SECRET;
+  if (cronSecret && req.headers.authorization !== `Bearer ${cronSecret}`) {
+    return res.status(401).json({ erro: 'Não autorizado' });
+  }
+
   try {
     const { itens } = await coletarItens({ porFeed: 10 });
     if (itens.length === 0) throw new Error('Nenhum feed disponível');

@@ -1,5 +1,17 @@
 // src/lib/format.js — helpers de formatação e busca.
 
+// Garante que um link só seja usado se for http(s). Bloqueia javascript:, data:, etc.
+// (defesa contra XSS via href vindo de feeds RSS de terceiros).
+export function linkSeguro(url) {
+  if (typeof url !== 'string') return '';
+  try {
+    const u = new URL(url, window.location.origin);
+    return u.protocol === 'http:' || u.protocol === 'https:' ? u.href : '';
+  } catch {
+    return '';
+  }
+}
+
 // "há 2 h", "há 3 d", "agora". Aceita ISO string, ms epoch, ou vazio.
 export function tempoRelativo(data) {
   if (!data) return 'agora';

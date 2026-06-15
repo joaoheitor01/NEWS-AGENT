@@ -5,12 +5,10 @@
 const API_BASE = import.meta.env.VITE_API_BASE || '';
 
 export async function buscarNoticias(topic = null, { signal } = {}) {
-  const resp = await fetch(`${API_BASE}/api/noticias`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ topic }),
-    signal,
-  });
+  // GET (em vez de POST) permite cache de borda na Vercel: reduz custo/abuso
+  // de chamadas repetidas à IA e acelera o carregamento.
+  const qs = topic ? `?topic=${encodeURIComponent(topic)}` : '';
+  const resp = await fetch(`${API_BASE}/api/noticias${qs}`, { method: 'GET', signal });
 
   if (!resp.ok) {
     throw new Error(`Falha na matriz (status ${resp.status})`);

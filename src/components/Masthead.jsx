@@ -1,7 +1,7 @@
 import { TOPICS } from '../lib/topics';
 
 // Cabeçalho/nameplate de jornal + navegação horizontal de seções (sticky).
-export default function Masthead({ view, onNavigate, hora, savedCount }) {
+export default function Masthead({ view, onNavigate, hora, savedCount, theme, onToggleTheme }) {
   const dataExtenso = hora.toLocaleDateString('pt-BR', {
     weekday: 'long', day: '2-digit', month: 'long', year: 'numeric',
   });
@@ -14,10 +14,10 @@ export default function Masthead({ view, onNavigate, hora, savedCount }) {
 
   return (
     <header className="sticky top-0 z-30 border-b-2 border-[var(--color-rule)] bg-[var(--color-bg)]/97 backdrop-blur">
-      {/* Linha superior: data + nameplate */}
+      {/* Linha superior: data + nameplate + tema */}
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 pt-2.5 pb-1.5">
-        <span className="hidden sm:block w-40 font-[family-name:var(--font-sans)] text-[11px] uppercase tracking-wide text-[var(--color-ink-faint)]">
-          {dataExtenso}
+        <span className="w-10 sm:w-40 font-[family-name:var(--font-sans)] text-[11px] uppercase tracking-wide text-[var(--color-ink-faint)]">
+          <span className="hidden sm:inline">{dataExtenso}</span>
         </span>
         <button
           onClick={() => onNavigate('home')}
@@ -26,9 +26,18 @@ export default function Masthead({ view, onNavigate, hora, savedCount }) {
         >
           Tech News Agent
         </button>
-        <span className="hidden sm:block w-40 text-right font-[family-name:var(--font-sans)] text-[11px] uppercase tracking-wide text-[var(--color-ink-faint)]">
-          Edição digital
-        </span>
+        <div className="flex w-10 sm:w-40 items-center justify-end">
+          <button
+            onClick={onToggleTheme}
+            className="flex items-center rounded-full p-2 text-[var(--color-ink-muted)] transition-colors hover:bg-[var(--color-section)] hover:text-[var(--color-ink)]"
+            aria-label={theme === 'dark' ? 'Mudar para tema claro' : 'Mudar para tema escuro'}
+            title={theme === 'dark' ? 'Tema claro' : 'Tema escuro'}
+          >
+            <span className="material-symbols-outlined text-[20px]">
+              {theme === 'dark' ? 'light_mode' : 'dark_mode'}
+            </span>
+          </button>
+        </div>
       </div>
 
       {/* Navegação de seções */}
