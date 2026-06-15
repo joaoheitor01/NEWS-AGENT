@@ -6,8 +6,8 @@
     }
   ],
   "functions": {
-    "api/noticias.js": { "maxDuration": 30 },
-    "api/cron.js":     { "maxDuration": 30 }
+    "api/noticias.js": { "maxDuration": 60 },
+    "api/cron.js":     { "maxDuration": 60 }
   },
   "headers": [
     {

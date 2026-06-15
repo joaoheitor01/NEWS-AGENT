@@ -57,9 +57,18 @@ async function listaModelos(apiKey) {
 }
 
 // Chama o OpenRouter tentando uma lista de modelos até um funcionar.
-async function chamarOpenRouter(apiKey, { messages, maxTokens = 3000, temperature = 0.4 }) {
+// Limitado por um prazo total (deadlineMs) e timeout por modelo, para que a
+// função serverless sempre retorne a tempo (cai na heurística se estourar).
+async function chamarOpenRouter(apiKey, { messages, maxTokens = 3000, temperature = 0.4, deadlineMs = 22000, porModeloMs = 12000 }) {
+  const inicio = Date.now();
   const erros = [];
   for (const model of await listaModelos(apiKey)) {
+    if (Date.now() - inicio > deadlineMs) {
+      erros.push('prazo esgotado');
+      break;
+    }
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), porModeloMs);
     try {
       const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
@@ -70,7 +79,9 @@ async function chamarOpenRouter(apiKey, { messages, maxTokens = 3000, temperatur
           'X-Title': 'Tech News Agent',
         },
         body: JSON.stringify({ model, max_tokens: maxTokens, temperature, messages }),
+        signal: ctrl.signal,
       });
+      clearTimeout(t);
 
       if (!resp.ok) {
         erros.push(`${model}:${resp.status}`);
@@ -82,7 +93,8 @@ async function chamarOpenRouter(apiKey, { messages, maxTokens = 3000, temperatur
       if (content) return content;
       erros.push(`${model}:vazio`);
     } catch (e) {
-      erros.push(`${model}:${e.message}`);
+      clearTimeout(t);
+      erros.push(`${model}:${e.name === 'AbortError' ? 'timeout' : e.message}`);
     }
   }
   throw new Error(`OpenRouter falhou: ${erros.join(' | ')}`);
@@ -97,7 +109,7 @@ async function curadoriaIA(apiKey, candidatos) {
 Seu método: (1) priorize fatos REAIS e RECENTES (não hype); (2) cruze e valide as fontes;
 (3) escreva em português com foco no IMPACTO PRÁTICO para quem trabalha com tecnologia.
 
-A partir da lista abaixo, selecione de 12 a 16 notícias mais importantes e DIVERSIFICADAS
+A partir da lista abaixo, selecione de 10 a 12 notícias mais importantes e DIVERSIFICADAS
 (temas e fontes variados; priorize portais BR e fontes primárias como OpenAI, Anthropic,
 Google DeepMind, universidades).
 
@@ -137,7 +149,7 @@ Retorne APENAS um objeto JSON válido (sem markdown, sem crases, sem texto fora 
 
   const texto = await chamarOpenRouter(apiKey, {
     messages: [{ role: 'user', content: prompt }],
-    maxTokens: 4000,
+    maxTokens: 2200,
   });
 
   const match = texto.match(/\{[\s\S]*\}/);
