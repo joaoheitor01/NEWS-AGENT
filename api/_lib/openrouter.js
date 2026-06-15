@@ -6,23 +6,15 @@
 const { detectarTopico } = require('./curate');
 
 const REFERER = process.env.SITE_URL || 'https://tech-news-agent.vercel.app';
+const MODEL = process.env.OPENROUTER_MODEL || 'openrouter/auto';
 
-// Modelos GRATUITOS do OpenRouter (não consomem créditos). Usados como fallback
-// para contas sem saldo. São tentados em ordem até um responder.
-const FREE_FALLBACKS = [
-  'deepseek/deepseek-chat-v3-0324:free',
+// Fallbacks fixos (caso a descoberta dinâmica falhe).
+const HARDCODED_FREE = [
   'meta-llama/llama-3.3-70b-instruct:free',
   'google/gemini-2.0-flash-exp:free',
-  'mistralai/mistral-small-3.1-24b-instruct:free',
+  'deepseek/deepseek-chat-v3-0324:free',
+  'qwen/qwen-2.5-72b-instruct:free',
 ];
-
-// Ordem de tentativa: modelo escolhido (se houver) → gratuitos → auto (pago).
-function modelos() {
-  const escolhido = process.env.OPENROUTER_MODEL;
-  return [...(escolhido ? [escolhido] : []), ...FREE_FALLBACKS, 'openrouter/auto'];
-}
-
-const MODEL = process.env.OPENROUTER_MODEL || FREE_FALLBACKS[0];
 
 // Lê a chave aceitando variações de nome (tolera o typo comum "OPENROUT_API_KEY").
 function getApiKey() {
@@ -34,10 +26,40 @@ function getApiKey() {
   );
 }
 
+// Descobre, na API do OpenRouter, quais modelos estão REALMENTE gratuitos agora
+// (preço 0 de prompt e completion). Evita IDs desatualizados. Cacheado por lambda.
+let _freeCache = null;
+async function modelosGratuitos(apiKey) {
+  if (_freeCache) return _freeCache;
+  try {
+    const resp = await fetch('https://openrouter.ai/api/v1/models', {
+      headers: { Authorization: `Bearer ${apiKey}` },
+    });
+    if (!resp.ok) return [];
+    const { data } = await resp.json();
+    const zero = (v) => v == null || v === '0' || Number(v) === 0;
+    const free = (data || [])
+      .filter((m) => m?.pricing && zero(m.pricing.prompt) && zero(m.pricing.completion))
+      .sort((a, b) => (b.context_length || 0) - (a.context_length || 0))
+      .map((m) => m.id);
+    _freeCache = free.slice(0, 6);
+    return _freeCache;
+  } catch {
+    return [];
+  }
+}
+
+// Ordem: modelo escolhido (se houver) → gratuitos descobertos → gratuitos fixos → auto.
+async function listaModelos(apiKey) {
+  const escolhido = process.env.OPENROUTER_MODEL ? [process.env.OPENROUTER_MODEL] : [];
+  const dinamicos = await modelosGratuitos(apiKey);
+  return [...new Set([...escolhido, ...dinamicos, ...HARDCODED_FREE, 'openrouter/auto'])].slice(0, 8);
+}
+
 // Chama o OpenRouter tentando uma lista de modelos até um funcionar.
 async function chamarOpenRouter(apiKey, { messages, maxTokens = 3000, temperature = 0.4 }) {
-  let ultimoErro = 'sem modelos';
-  for (const model of modelos()) {
+  const erros = [];
+  for (const model of await listaModelos(apiKey)) {
     try {
       const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
@@ -51,19 +73,19 @@ async function chamarOpenRouter(apiKey, { messages, maxTokens = 3000, temperatur
       });
 
       if (!resp.ok) {
-        ultimoErro = `${model} -> ${resp.status}: ${(await resp.text()).slice(0, 120)}`;
-        continue; // tenta o próximo modelo (ex.: 402 sem créditos, 404 modelo indisponível)
+        erros.push(`${model}:${resp.status}`);
+        continue;
       }
 
       const data = await resp.json();
       const content = data?.choices?.[0]?.message?.content || '';
       if (content) return content;
-      ultimoErro = `${model} -> resposta vazia`;
+      erros.push(`${model}:vazio`);
     } catch (e) {
-      ultimoErro = `${model} -> ${e.message}`;
+      erros.push(`${model}:${e.message}`);
     }
   }
-  throw new Error(`OpenRouter falhou: ${ultimoErro}`);
+  throw new Error(`OpenRouter falhou: ${erros.join(' | ')}`);
 }
 
 // Cura as notícias com IA no estilo "briefing editorial":
