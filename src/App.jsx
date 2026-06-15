@@ -199,7 +199,7 @@ export default function App() {
               disabled={loading}
               className="mb-1 flex items-center gap-1.5 border border-[var(--color-rule)] px-3.5 py-1.5 font-[family-name:var(--font-sans)] text-[12px] font-semibold uppercase tracking-wide text-[var(--color-ink)] transition-colors hover:bg-[var(--color-ink)] hover:text-[var(--color-bg)] disabled:opacity-40"
             >
-              <span className={`material-symbols-outlined text-[16px] ${loading ? 'animate-spin' : ''}`}>
+              <span translate="no" className={`material-symbols-outlined text-[16px] ${loading ? 'animate-spin' : ''}`}>
                 {loading ? 'progress_activity' : 'refresh'}
               </span>
               {loading ? 'Atualizando' : 'Atualizar'}
@@ -247,7 +247,7 @@ export default function App() {
           </div>
         ) : lista.length === 0 ? (
           <div className="flex flex-col items-center gap-3 border-t border-[var(--color-border)] py-20 text-center">
-            <span className="material-symbols-outlined text-4xl text-[var(--color-ink-faint)]">
+            <span translate="no" className="material-symbols-outlined text-4xl text-[var(--color-ink-faint)]">
               {isSalvos ? 'bookmark_border' : search ? 'search_off' : 'newspaper'}
             </span>
             <p className="font-[family-name:var(--font-serif)] text-[var(--color-ink-muted)]">

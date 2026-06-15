@@ -37,7 +37,7 @@ export default function Masthead({ view, onNavigate, hora, savedCount, theme, on
             aria-label={theme === 'dark' ? 'Mudar para tema claro' : 'Mudar para tema escuro'}
             title={theme === 'dark' ? 'Tema claro' : 'Tema escuro'}
           >
-            <span className="material-symbols-outlined text-[20px]">
+            <span translate="no" className="material-symbols-outlined text-[20px]">
               {theme === 'dark' ? 'light_mode' : 'dark_mode'}
             </span>
           </button>
