@@ -5,8 +5,16 @@
 // -----------------------------------------------------------------------------
 const { detectarTopico } = require('./curate');
 
-const MODEL = process.env.OPENROUTER_MODEL || 'openrouter/auto';
 const REFERER = process.env.SITE_URL || 'https://tech-news-agent.vercel.app';
+const MODEL = process.env.OPENROUTER_MODEL || 'openrouter/auto';
+
+// Fallbacks fixos (caso a descoberta dinâmica falhe).
+const HARDCODED_FREE = [
+  'meta-llama/llama-3.3-70b-instruct:free',
+  'google/gemini-2.0-flash-exp:free',
+  'deepseek/deepseek-chat-v3-0324:free',
+  'qwen/qwen-2.5-72b-instruct:free',
+];
 
 // Lê a chave aceitando variações de nome (tolera o typo comum "OPENROUT_API_KEY").
 function getApiKey() {
@@ -18,25 +26,78 @@ function getApiKey() {
   );
 }
 
-async function chamarOpenRouter(apiKey, { messages, maxTokens = 3000, temperature = 0.4 }) {
-  const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-      'HTTP-Referer': REFERER,
-      'X-Title': 'Tech News Agent',
-    },
-    body: JSON.stringify({ model: MODEL, max_tokens: maxTokens, temperature, messages }),
-  });
-
-  if (!resp.ok) {
-    const txt = await resp.text();
-    throw new Error(`OpenRouter ${resp.status}: ${txt.slice(0, 300)}`);
+// Descobre, na API do OpenRouter, quais modelos estão REALMENTE gratuitos agora
+// (preço 0 de prompt e completion). Evita IDs desatualizados. Cacheado por lambda.
+let _freeCache = null;
+async function modelosGratuitos(apiKey) {
+  if (_freeCache) return _freeCache;
+  try {
+    const resp = await fetch('https://openrouter.ai/api/v1/models', {
+      headers: { Authorization: `Bearer ${apiKey}` },
+    });
+    if (!resp.ok) return [];
+    const { data } = await resp.json();
+    const zero = (v) => v == null || v === '0' || Number(v) === 0;
+    const free = (data || [])
+      .filter((m) => m?.pricing && zero(m.pricing.prompt) && zero(m.pricing.completion))
+      .sort((a, b) => (b.context_length || 0) - (a.context_length || 0))
+      .map((m) => m.id);
+    _freeCache = free.slice(0, 6);
+    return _freeCache;
+  } catch {
+    return [];
   }
+}
 
-  const data = await resp.json();
-  return data?.choices?.[0]?.message?.content || '';
+// Ordem: modelo escolhido (se houver) → gratuitos descobertos → gratuitos fixos → auto.
+async function listaModelos(apiKey) {
+  const escolhido = process.env.OPENROUTER_MODEL ? [process.env.OPENROUTER_MODEL] : [];
+  const dinamicos = await modelosGratuitos(apiKey);
+  return [...new Set([...escolhido, ...dinamicos, ...HARDCODED_FREE, 'openrouter/auto'])].slice(0, 8);
+}
+
+// Chama o OpenRouter tentando uma lista de modelos até um funcionar.
+// Limitado por um prazo total (deadlineMs) e timeout por modelo, para que a
+// função serverless sempre retorne a tempo (cai na heurística se estourar).
+async function chamarOpenRouter(apiKey, { messages, maxTokens = 3000, temperature = 0.4, deadlineMs = 22000, porModeloMs = 12000 }) {
+  const inicio = Date.now();
+  const erros = [];
+  for (const model of await listaModelos(apiKey)) {
+    if (Date.now() - inicio > deadlineMs) {
+      erros.push('prazo esgotado');
+      break;
+    }
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), porModeloMs);
+    try {
+      const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': REFERER,
+          'X-Title': 'Tech News Agent',
+        },
+        body: JSON.stringify({ model, max_tokens: maxTokens, temperature, messages }),
+        signal: ctrl.signal,
+      });
+      clearTimeout(t);
+
+      if (!resp.ok) {
+        erros.push(`${model}:${resp.status}`);
+        continue;
+      }
+
+      const data = await resp.json();
+      const content = data?.choices?.[0]?.message?.content || '';
+      if (content) return content;
+      erros.push(`${model}:vazio`);
+    } catch (e) {
+      clearTimeout(t);
+      erros.push(`${model}:${e.name === 'AbortError' ? 'timeout' : e.message}`);
+    }
+  }
+  throw new Error(`OpenRouter falhou: ${erros.join(' | ')}`);
 }
 
 // Cura as notícias com IA no estilo "briefing editorial":
@@ -48,20 +109,19 @@ async function curadoriaIA(apiKey, candidatos) {
 Seu método: (1) priorize fatos REAIS e RECENTES (não hype); (2) cruze e valide as fontes;
 (3) escreva em português com foco no IMPACTO PRÁTICO para quem trabalha com tecnologia.
 
-A partir da lista abaixo, selecione de 14 a 20 notícias mais importantes e DIVERSIFICADAS
+A partir da lista abaixo, selecione de 10 a 12 notícias mais importantes e DIVERSIFICADAS
 (temas e fontes variados; priorize portais BR e fontes primárias como OpenAI, Anthropic,
 Google DeepMind, universidades).
 
 Lista (JSON):
-${JSON.stringify(candidatos.map((c) => ({
+${JSON.stringify(candidatos.slice(0, 28).map((c) => ({
   titulo: c.titulo,
-  resumo: c.resumoOriginal,
+  resumo: (c.resumoOriginal || '').slice(0, 180),
   fonte: c.fonte,
   link: c.link,
   imagem: c.imagem,
   pais: c.pais,
-  data: c.data,
-})), null, 1)}
+})), null, 0)}
 
 Retorne APENAS um objeto JSON válido (sem markdown, sem crases, sem texto fora do JSON):
 {
@@ -89,7 +149,7 @@ Retorne APENAS um objeto JSON válido (sem markdown, sem crases, sem texto fora 
 
   const texto = await chamarOpenRouter(apiKey, {
     messages: [{ role: 'user', content: prompt }],
-    maxTokens: 6000,
+    maxTokens: 2200,
   });
 
   const match = texto.match(/\{[\s\S]*\}/);
