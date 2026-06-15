@@ -1,85 +1,69 @@
 // api/cron.js
-const Parser = require('rss-parser');
+// -----------------------------------------------------------------------------
+// Job diário: escolhe a notícia mais relevante do dia e envia push via ntfy.sh.
+// Usa as mesmas libs do endpoint principal (fonte única de verdade).
+// -----------------------------------------------------------------------------
+const { coletarItens, selecionarCandidatos, curadoriaHeuristica } = require('./_lib/curate');
+const { chamarOpenRouter } = require('./_lib/openrouter');
 
-const FEEDS = [
-  { url: 'https://canaltech.com.br/rss/',              nome: 'Canaltech'         },
-  { url: 'https://olhardigital.com.br/feed/',           nome: 'Olhar Digital'     },
-  { url: 'https://tecnoblog.net/feed/',                 nome: 'Tecnoblog'         },
-  { url: 'https://www.tabnews.com.br/recentes/rss',     nome: 'TabNews'           },
-  { url: 'https://diolinux.com.br/feed',                nome: 'Diolinux'          },
-  { url: 'https://www.infomoney.com.br/feed/',          nome: 'InfoMoney'         },
-  { url: 'https://www.theverge.com/rss/index.xml',      nome: 'The Verge'         },
-  { url: 'https://feeds.feedburner.com/TechCrunch',     nome: 'TechCrunch'        },
-];
+const NTFY_TOPIC = process.env.NTFY_TOPIC || 'aion_news_jh_2026';
 
 module.exports = async function handler(req, res) {
+  // Proteção: se CRON_SECRET estiver definido, exige o header Authorization.
+  // A Vercel envia "Authorization: Bearer <CRON_SECRET>" automaticamente nos crons.
+  const cronSecret = process.env.CRON_SECRET;
+  if (cronSecret && req.headers.authorization !== `Bearer ${cronSecret}`) {
+    return res.status(401).json({ erro: 'Não autorizado' });
+  }
+
   try {
-    const parser = new Parser({ timeout: 8000 });
+    const { itens } = await coletarItens({ porFeed: 10 });
+    if (itens.length === 0) throw new Error('Nenhum feed disponível');
 
-    const feedResults = await Promise.allSettled(
-      FEEDS.map(f => parser.parseURL(f.url).then(feed => ({ feed, fonte: f.nome })))
-    );
+    const candidatos = selecionarCandidatos(itens, null, 25);
 
-    const todosItens = [];
-    for (const result of feedResults) {
-      if (result.status === 'fulfilled') {
-        const { feed, fonte } = result.value;
-        feed.items.slice(0, 10).forEach(item => {
-          todosItens.push({ titulo: item.title, link: item.link, fonte });
+    // Escolhe a melhor notícia: IA se houver chave, senão a de maior score.
+    let noticia;
+    const apiKey = process.env.OPENROUTER_API_KEY;
+
+    if (apiKey) {
+      try {
+        const texto = await chamarOpenRouter(apiKey, {
+          maxTokens: 600,
+          messages: [{
+            role: 'user',
+            content: `Você é um curador tech com foco no Brasil. Escolha A notícia mais importante desta lista para um desenvolvedor brasileiro começar o dia. Priorize IA, desenvolvimento, open-source, hardware, segurança e mercado tech BR; prefira fontes brasileiras quando igualmente relevantes.
+
+Lista: ${JSON.stringify(candidatos.slice(0, 25).map((c) => ({ titulo: c.titulo, resumo: c.resumoOriginal, link: c.link, fonte: c.fonte })))}
+
+Retorne APENAS um JSON com "titulo" (português), "resumo" (2 frases em português direto), "link" (original) e "fonte". Sem texto extra, sem crases.`,
+          }],
         });
+        const match = texto.match(/\{[\s\S]*\}/);
+        if (match) noticia = JSON.parse(match[0]);
+      } catch (err) {
+        console.error('[cron] IA falhou, usando heurística:', err.message);
       }
     }
 
-    if (todosItens.length === 0) throw new Error('Nenhum feed disponível');
+    if (!noticia) {
+      noticia = curadoriaHeuristica(candidatos, 1)[0];
+    }
 
-    const aiResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://project-o0ekx.vercel.app',
-        'X-Title': 'Tech News Agent Cron'
-      },
-      body: JSON.stringify({
-        model: 'openrouter/auto',
-        max_tokens: 600,
-        messages: [{
-          role: 'user',
-          content: `Você é um curador tech com foco no Brasil. Escolha A notícia mais importante desta lista para um desenvolvedor brasileiro começar o dia.
-
-Priorize: IA, desenvolvimento, open-source, hardware, segurança, mercado tech BR.
-Prefira fontes brasileiras quando a notícia for igualmente relevante.
-
-Lista: ${JSON.stringify(todosItens.slice(0, 25))}
-
-Retorne APENAS um JSON com: "titulo" (em português), "resumo" (2 frases em português direto), "link" (original), "fonte". Sem texto extra, sem crases.`
-        }]
-      })
-    });
-
-    const aiData = await aiResponse.json();
-    const textoBruto = aiData?.choices?.[0]?.message?.content || '';
-    const match = textoBruto.match(/\{[\s\S]*\}/);
-    if (!match) throw new Error('IA não retornou JSON válido');
-
-    const noticia = JSON.parse(match[0]);
-
-    // Envia notificação via ntfy
-    await fetch('https://ntfy.sh/aion_news_jh_2026', {
+    await fetch(`https://ntfy.sh/${NTFY_TOPIC}`, {
       method: 'POST',
       body: noticia.resumo,
       headers: {
-        'Title': noticia.titulo,
-        'Tags': 'robot,newspaper',
-        'Click': noticia.link,
-        'Priority': 'default'
-      }
+        Title: noticia.titulo,
+        Tags: 'robot,newspaper',
+        Click: noticia.link,
+        Priority: 'default',
+      },
     });
 
-    res.status(200).json({ status: 'ok', noticia });
-
+    return res.status(200).json({ status: 'ok', noticia });
   } catch (error) {
-    console.error('Cron erro:', error);
-    res.status(500).json({ erro: error.message });
+    console.error('[cron] erro:', error.message);
+    return res.status(500).json({ erro: error.message });
   }
 };

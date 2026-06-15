@@ -1,5 +1,9 @@
 {
-  "appId": "com.example.app",
-  "appName": "new-agent",
-  "webDir": "dist"
+  "appId": "br.com.technewsagent.app",
+  "appName": "Tech News Agent",
+  "webDir": "dist",
+  "backgroundColor": "#08080b",
+  "android": {
+    "allowMixedContent": false
+  }
 }

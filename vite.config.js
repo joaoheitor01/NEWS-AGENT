@@ -1,5 +1,6 @@
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
 import path from 'node:path'
 import { createRequire } from 'node:module'
 
@@ -21,6 +22,13 @@ function apiDevBridge() {
         if (!handlerPath) {
           next()
           return
+        }
+
+        // Disponibiliza a query string (para handlers que usam req.query, ex.: GET ?topic=)
+        try {
+          req.query = Object.fromEntries(new URL(req.url || '', 'http://localhost').searchParams)
+        } catch {
+          req.query = {}
         }
 
         if (['POST', 'PUT', 'PATCH'].includes(req.method || '')) {
@@ -72,6 +80,6 @@ export default defineConfig(({ mode }) => {
   Object.assign(process.env, env)
 
   return {
-    plugins: [react(), apiDevBridge()],
+    plugins: [tailwindcss(), react(), apiDevBridge()],
   }
 })

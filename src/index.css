@@ -1,10 +1,96 @@
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+@import 'tailwindcss';
+
+/* ==========================================================================
+   TECH NEWS AGENT — Design System (estilo jornal editorial, claro)
+   Inspiração: jornais como o The New York Times. Sem neon, cores sóbrias,
+   tipografia serifada, fios/réguas finas, layout em blocos.
+   ========================================================================== */
+@theme {
+  /* Tipografia */
+  --font-serif: 'Lora', Georgia, 'Times New Roman', serif;
+  --font-sans: 'Libre Franklin', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  /* Superfícies (claras) */
+  --color-bg: #ffffff;
+  --color-surface: #ffffff;
+  --color-section: #f6f6f3;
+  --color-border: #e3e3df;
+  --color-rule: #121212;
+
+  /* Texto */
+  --color-ink: #121212;
+  --color-ink-muted: #5a5a57;
+  --color-ink-faint: #8a8a85;
+
+  /* Acentos sóbrios (usados com parcimônia) */
+  --color-accent: #326891;   /* azul editorial discreto (links/categorias) */
+  --color-danger: #9b2c2c;
+
+  --animate-fade-up: fade-up 0.3s ease both;
 }
 
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== Base ===== */
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+
 body {
-  background: #080b14;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  margin: 0;
+  min-height: 100vh;
+  background-color: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection { background: #d8e2ea; color: var(--color-ink); }
+
+/* Scrollbar discreta */
+* { scrollbar-width: thin; scrollbar-color: #cfcfca transparent; }
+*::-webkit-scrollbar { width: 9px; height: 9px; }
+*::-webkit-scrollbar-thumb { background: #cfcfca; border-radius: 8px; }
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  user-select: none;
+}
+
+/* Pequeno traço decorativo (nameplate / seções) */
+.rule-strong { border-color: var(--color-rule); }
+
+/* ===== Modo escuro (classe .dark no <html>) — sobrescreve as variáveis ===== */
+.dark {
+  --color-bg: #121212;
+  --color-surface: #1a1a1a;
+  --color-section: #202020;
+  --color-border: #2e2e2e;
+  --color-rule: #ededed;
+
+  --color-ink: #ededeb;
+  --color-ink-muted: #b2b2ac;
+  --color-ink-faint: #87877f;
+
+  --color-accent: #8fb6d6;
+  --color-danger: #ef8d8d;
+}
+.dark ::selection { background: #2c3d49; color: var(--color-ink); }
+.dark *::-webkit-scrollbar-thumb { background: #3a3a3a; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
