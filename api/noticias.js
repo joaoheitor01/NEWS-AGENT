@@ -45,7 +45,12 @@ module.exports = async function handler(req, res) {
 
     if (apiKey) {
       try {
-        const r = await curadoriaIA(apiKey, candidatos);
+        // Rede de segurança: limite de tempo total para a IA. Se estourar, cai na
+        // heurística e retorna rápido — garante que a função nunca dê timeout (504).
+        const guarda = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('tempo limite da IA')), 45000)
+        );
+        const r = await Promise.race([curadoriaIA(apiKey, candidatos), guarda]);
         noticias = r.noticias;
         briefing = r.briefing;
         curadoEm = 'ia';
