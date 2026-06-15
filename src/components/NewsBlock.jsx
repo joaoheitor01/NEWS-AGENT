@@ -9,6 +9,24 @@ export default function NewsBlock({ noticia, variant = 'standard', expanded, onT
   const temImagem = noticia.imagem && !imgErro;
   const isLead = variant === 'lead';
   const href = linkSeguro(noticia.link);
+  const tituloTxt = noticia.emoji ? `${noticia.emoji} ${noticia.titulo}` : noticia.titulo;
+
+  // "Por dentro da notícia" (estilo briefing) — só quando há pontos e está expandido.
+  const Pontos = expanded && noticia.pontos?.length > 0 ? (
+    <div className="mt-1 flex flex-col gap-2">
+      <span className="font-[family-name:var(--font-sans)] text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--color-ink-faint)]">
+        🔍 Por dentro da notícia
+      </span>
+      <ul className="flex flex-col gap-1.5">
+        {noticia.pontos.map((p, i) => (
+          <li key={i} className="font-[family-name:var(--font-serif)] text-[14px] leading-relaxed text-[var(--color-ink-muted)]">
+            {p.rotulo && <strong className="font-semibold text-[var(--color-ink)]">{p.rotulo}: </strong>}
+            {p.texto}
+          </li>
+        ))}
+      </ul>
+    </div>
+  ) : null;
 
   const Kicker = (
     <div className="flex items-center gap-2 font-[family-name:var(--font-sans)] text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--color-accent)]">
@@ -90,11 +108,12 @@ export default function NewsBlock({ noticia, variant = 'standard', expanded, onT
         <div className="flex flex-col gap-3 md:order-1 md:self-center">
           {Kicker}
           <h2 className="font-[family-name:var(--font-serif)] text-[26px] sm:text-[32px] font-semibold leading-[1.12] tracking-[-0.01em] text-[var(--color-ink)] group-hover:text-black">
-            {noticia.titulo}
+            {tituloTxt}
           </h2>
           <p className={`font-[family-name:var(--font-serif)] text-[16px] leading-relaxed text-[var(--color-ink-muted)] ${expanded ? '' : 'line-clamp-3'}`}>
             {noticia.resumo}
           </p>
+          {Pontos}
           {Byline}
           {Acoes}
         </div>
@@ -111,11 +130,12 @@ export default function NewsBlock({ noticia, variant = 'standard', expanded, onT
       {Imagem}
       {Kicker}
       <h3 className="font-[family-name:var(--font-serif)] text-[19px] font-semibold leading-[1.2] text-[var(--color-ink)] group-hover:underline decoration-1 underline-offset-2">
-        {noticia.titulo}
+        {tituloTxt}
       </h3>
       <p className={`font-[family-name:var(--font-serif)] text-[14.5px] leading-relaxed text-[var(--color-ink-muted)] ${expanded ? '' : 'line-clamp-3'}`}>
         {noticia.resumo}
       </p>
+      {Pontos}
       {Byline}
       {Acoes}
     </article>

@@ -39,11 +39,14 @@ module.exports = async function handler(req, res) {
 
     const apiKey = process.env.OPENROUTER_API_KEY;
     let noticias;
+    let briefing = null;
     let curadoEm = 'heuristica';
 
     if (apiKey) {
       try {
-        noticias = await curadoriaIA(apiKey, candidatos);
+        const r = await curadoriaIA(apiKey, candidatos);
+        noticias = r.noticias;
+        briefing = r.briefing;
         curadoEm = 'ia';
       } catch (err) {
         console.error('[noticias] IA falhou, usando heurística:', err.message);
@@ -58,6 +61,7 @@ module.exports = async function handler(req, res) {
 
     return res.status(200).json({
       noticias,
+      briefing,
       geradoEm: new Date().toISOString(),
       totalFontes: feedsOk,
       totalFeeds,

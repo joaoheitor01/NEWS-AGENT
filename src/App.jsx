@@ -79,7 +79,7 @@ export default function App() {
       feedRef.current = novo;
       setFeed(novo);
 
-      const novaMeta = { curadoria: data.curadoria, totalFontes: data.totalFontes, geradoEm: data.geradoEm };
+      const novaMeta = { curadoria: data.curadoria, totalFontes: data.totalFontes, geradoEm: data.geradoEm, briefing: data.briefing || null };
       setMeta({ ...novaMeta, ts: Date.now() });
       setCache(novo, novaMeta);
       flash(`${recebidas.length} notícias atualizadas`);
@@ -176,6 +176,20 @@ export default function App() {
               {saudacao(hora)}, João Heitor.
             </p>
           </div>
+        )}
+
+        {/* Briefing do dia (quando a curadoria por IA está ativa) */}
+        {isHome && meta?.briefing && (
+          <section className="mb-9 border-l-2 border-[var(--color-rule)] pl-5">
+            <h2 className="mb-2 font-[family-name:var(--font-sans)] text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--color-ink-faint)]">
+              O resumo do dia
+            </h2>
+            {meta.briefing.split('\n').filter(Boolean).map((par, i) => (
+              <p key={i} className="mb-2 font-[family-name:var(--font-serif)] text-[17px] leading-relaxed text-[var(--color-ink)]">
+                {par}
+              </p>
+            ))}
+          </section>
         )}
 
         {/* Cabeçalho da seção */}
