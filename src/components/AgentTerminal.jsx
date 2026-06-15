@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 
 const DEFAULT_LINES = [
   'inicializando neural news crawler...',
-  'varrendo 16 fontes em busca de sinais',
+  'varrendo dezenas de fontes em busca de sinais',
   'aguardando trigger manual...',
 ];
 

@@ -61,7 +61,7 @@ export default function App() {
     setLoading(true);
     setLog([]);
     addLog('inicializando neural news crawler...');
-    addLog('coletando 16 fontes de tecnologia BR + internacional');
+    addLog('coletando fontes de tecnologia BR + internacional');
     addLog(topic ? `filtrando sinais do tópico "${topicMeta(topic).long}"` : 'curando notícias mais relevantes');
 
     try {

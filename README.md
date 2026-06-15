@@ -10,8 +10,9 @@ tópico, busca instantânea, notícias salvas e push diário.
 
 ## ✨ Recursos
 
-- **16 fontes RSS** (Canaltech, Olhar Digital, Tecnoblog, TecMundo, Diolinux,
-  TabNews, The Verge, Ars Technica, Hacker News, etc.).
+- **20+ fontes RSS**: portais BR (Canaltech, Olhar Digital, Tecnoblog, TecMundo,
+  Diolinux, TabNews…), referências globais (The Verge, Ars Technica, Hacker News…)
+  e **laboratórios de IA** (OpenAI, Anthropic, Google DeepMind, Hugging Face…).
 - **Curadoria por IA** via OpenRouter — _opcional_. Sem chave, usa uma
   **curadoria heurística** (pontuação por relevância + recência + peso da fonte).
 - **7 tópicos** alinhados ponta a ponta (IA, Dev, Hardware, Chips, Cyber, Web3,

@@ -32,6 +32,17 @@ const FEEDS = [
   { url: 'https://feeds.arstechnica.com/arstechnica/index', nome: 'Ars Technica', pais: 'US', peso: 1 },
   { url: 'https://www.engadget.com/rss.xml',         nome: 'Engadget',       pais: 'US', peso: 1 },
   { url: 'https://hnrss.org/frontpage',              nome: 'Hacker News',    pais: 'US', peso: 1 },
+
+  // === INTERNACIONAL — Laboratórios de IA e pesquisa (fontes primárias) ===
+  { url: 'https://openai.com/news/rss.xml',          nome: 'OpenAI',         pais: 'US', peso: 2 },
+  { url: 'https://deepmind.google/blog/rss.xml',     nome: 'Google DeepMind', pais: 'US', peso: 2 },
+  { url: 'https://huggingface.co/blog/feed.xml',     nome: 'Hugging Face',   pais: 'US', peso: 2 },
+  { url: 'https://www.technologyreview.com/feed/',   nome: 'MIT Tech Review', pais: 'US', peso: 2 },
+  { url: 'https://the-decoder.com/feed/',            nome: 'The Decoder',    pais: 'US', peso: 1 },
+  { url: 'https://blogs.nvidia.com/feed/',           nome: 'NVIDIA Blog',    pais: 'US', peso: 1 },
+  { url: 'https://venturebeat.com/category/ai/feed/', nome: 'VentureBeat AI', pais: 'US', peso: 1 },
+  // Anthropic não publica RSS oficial; usamos um espelho comunitário mantido.
+  { url: 'https://raw.githubusercontent.com/taobojlen/anthropic-rss-feed/main/anthropic_news_rss.xml', nome: 'Anthropic', pais: 'US', peso: 2 },
 ];
 
 // Tópicos: a CHAVE deve casar com `src/lib/topics.js` (frontend).
