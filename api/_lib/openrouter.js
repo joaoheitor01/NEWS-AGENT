@@ -29,20 +29,20 @@ async function chamarOpenRouter(apiKey, { messages, maxTokens = 3000, temperatur
   return data?.choices?.[0]?.message?.content || '';
 }
 
-// Cura entre 15 e 21 notícias usando a IA. Lança erro se falhar (chamador faz fallback).
+// Cura as notícias com IA no estilo "briefing editorial":
+// - um panorama do dia (briefing)
+// - por matéria: emoji, resumo, e bullets "Por dentro da notícia"
+// Retorna { briefing, noticias }. Lança erro se falhar (chamador faz fallback).
 async function curadoriaIA(apiKey, candidatos) {
-  const prompt = `Você é um curador de notícias de tecnologia com foco no Brasil.
-Analise a lista de notícias coletadas de portais brasileiros e internacionais e selecione
-entre 15 e 21 das MAIS IMPORTANTES, RECENTES e DIVERSIFICADAS.
+  const prompt = `Você é o curador-chefe de um jornal digital de tecnologia com foco no Brasil.
+Seu método: (1) priorize fatos REAIS e RECENTES (não hype); (2) cruze e valide as fontes;
+(3) escreva em português com foco no IMPACTO PRÁTICO para quem trabalha com tecnologia.
 
-Prioridade:
-1. Portais brasileiros (Canaltech, Olhar Digital, Tecnoblog, TecMundo, Diolinux, TabNews).
-2. Notícias internacionais que impactam o mercado brasileiro de tecnologia.
+A partir da lista abaixo, selecione de 14 a 20 notícias mais importantes e DIVERSIFICADAS
+(temas e fontes variados; priorize portais BR e fontes primárias como OpenAI, Anthropic,
+Google DeepMind, universidades).
 
-Temas: IA, desenvolvimento de software, hardware, semicondutores, cibersegurança, web3/cripto,
-mercado e startups. DIVERSIFIQUE temas e fontes — não repita o mesmo assunto.
-
-Lista disponível (JSON):
+Lista (JSON):
 ${JSON.stringify(candidatos.map((c) => ({
   titulo: c.titulo,
   resumo: c.resumoOriginal,
@@ -53,37 +53,59 @@ ${JSON.stringify(candidatos.map((c) => ({
   data: c.data,
 })), null, 1)}
 
-Retorne APENAS um array JSON válido (sem markdown, sem crases, sem texto) com 15 a 21 objetos:
-- "titulo": título claro em português
-- "resumo": 2 frases explicando o que aconteceu e por que importa
-- "fonte": nome do veículo (exatamente como na lista)
-- "link": URL original SEM alteração
-- "imagem": a URL de imagem da lista, ou null
-- "empresa": empresa/projeto principal, ou o nome da fonte
-- "impacto": "alto", "médio" ou "baixo"
-- "pais": "BR" ou "US"
-- "topico": um de ["ia","dev","hardware","chips","cyber","web3","mercado"]`;
+Retorne APENAS um objeto JSON válido (sem markdown, sem crases, sem texto fora do JSON):
+{
+  "briefing": "1 a 2 parágrafos curtos, em português, com o PANORAMA do dia: o que mais importa agora e por quê. Tom editorial e direto.",
+  "noticias": [
+    {
+      "emoji": "um emoji que combine com a notícia (ex.: ⚖️ 🤖 💾 🔒 🚀 🧠)",
+      "titulo": "título claro em português",
+      "resumo": "2 a 3 frases: o que aconteceu e por que importa",
+      "pontos": [
+        { "rotulo": "O fato principal", "texto": "1 frase" },
+        { "rotulo": "Desdobramentos técnicos", "texto": "1 frase" },
+        { "rotulo": "Por que importa", "texto": "1 frase" }
+      ],
+      "fonte": "nome do veículo, exatamente como na lista",
+      "link": "URL original SEM alteração",
+      "imagem": "a URL de imagem da lista, ou null",
+      "empresa": "empresa/projeto principal, ou o nome da fonte",
+      "impacto": "alto, médio ou baixo",
+      "pais": "BR ou US",
+      "topico": "um de [ia, ciencia, dev, hardware, chips, cyber, web3, mercado]"
+    }
+  ]
+}`;
 
   const texto = await chamarOpenRouter(apiKey, {
     messages: [{ role: 'user', content: prompt }],
-    maxTokens: 4000,
+    maxTokens: 6000,
   });
 
-  const match = texto.match(/\[[\s\S]*\]/);
-  if (!match) throw new Error('IA não retornou array JSON');
+  const match = texto.match(/\{[\s\S]*\}/);
+  if (!match) throw new Error('IA não retornou objeto JSON');
 
-  let noticias = JSON.parse(match[0]);
-  if (!Array.isArray(noticias)) noticias = [noticias];
+  const obj = JSON.parse(match[0]);
+  let noticias = Array.isArray(obj.noticias) ? obj.noticias : Array.isArray(obj) ? obj : [];
+  if (noticias.length === 0) throw new Error('IA não retornou notícias');
 
-  // Sanitiza e completa campos faltantes a partir dos candidatos originais.
+  // Sanitiza e completa campos a partir dos candidatos originais.
   const porLink = new Map(candidatos.map((c) => [(c.link || '').split('?')[0], c]));
-  return noticias.slice(0, 21).map((n) => {
+  const limpa = noticias.slice(0, 21).map((n) => {
     const orig = porLink.get((n.link || '').split('?')[0]) || {};
+    const pontos = Array.isArray(n.pontos)
+      ? n.pontos
+          .filter((p) => p && (p.texto || p.rotulo))
+          .slice(0, 4)
+          .map((p) => ({ rotulo: String(p.rotulo || '').slice(0, 60), texto: String(p.texto || '').slice(0, 300) }))
+      : [];
     return {
+      emoji: typeof n.emoji === 'string' ? n.emoji.slice(0, 4) : '',
       titulo: n.titulo || orig.titulo || '',
       resumo: n.resumo || '',
+      pontos,
       fonte: n.fonte || orig.fonte || 'Tech',
-      link: n.link || orig.link || '',
+      link: /^https?:\/\//i.test(n.link || '') ? n.link : (orig.link || ''),
       imagem: n.imagem || orig.imagem || null,
       empresa: n.empresa || n.fonte || orig.fonte || 'Tech',
       impacto: ['alto', 'médio', 'baixo'].includes(n.impacto) ? n.impacto : 'médio',
@@ -92,6 +114,9 @@ Retorne APENAS um array JSON válido (sem markdown, sem crases, sem texto) com 1
       data: orig.data || '',
     };
   });
+
+  const briefing = typeof obj.briefing === 'string' && obj.briefing.trim() ? obj.briefing.trim() : null;
+  return { briefing, noticias: limpa };
 }
 
 module.exports = { curadoriaIA, chamarOpenRouter, MODEL };
