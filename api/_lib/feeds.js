@@ -43,6 +43,21 @@ const FEEDS = [
   // Anthropic não publica RSS oficial; usamos um espelho comunitário mantido.
   { url: 'https://raw.githubusercontent.com/taobojlen/anthropic-rss-feed/main/anthropic_news_rss.xml', nome: 'Anthropic', pais: 'US', peso: 2 },
 
+  // === REDES SOCIAIS — Perfis oficiais via RSS.app (validados manualmente) ===
+  // Hashtags genéricas (#AI, #GenerativeAI) foram testadas e descartadas: alto
+  // volume de spam, marketing genérico e ruído. Perfis oficiais têm sinal limpo.
+  { url: 'https://rss.app/feeds/RBWbiGpgxKL6GCrg.xml', nome: 'OpenAI (X)',    pais: 'US', peso: 2 },
+  { url: 'https://rss.app/feeds/f0MgDInAjK7gkkhU.xml', nome: 'Anthropic (X)', pais: 'US', peso: 2 },
+
+  // === INTERNACIONAL — Veículos de imprensa generalistas (seção Tech via RSS.app) ===
+  // Apenas seções de tecnologia foram validadas. As versões de "Business" desses
+  // mesmos veículos foram testadas e descartadas: traziam majoritariamente
+  // macroeconomia, política e negócios fora do escopo do jornal (ex: BBC Business
+  // trouxe Pizza Hut, inflação no Japão, Thames Water; TIME Business trouxe moda,
+  // clima e IPOs sem relação direta com tech).
+  { url: 'https://rss.app/feeds/gUl0Bz2ifVw6H2KL.xml', nome: 'TIME (Tech)',  pais: 'US', peso: 2 },
+  { url: 'https://rss.app/feeds/QddWfH2Vna5ZyGt1.xml', nome: 'BBC (Tech)',   pais: 'US', peso: 2 },
+
   // === UNIVERSIDADES E PESQUISA (Brasil + exterior) ===
   { url: 'https://jornal.usp.br/feed/',              nome: 'Jornal da USP',  pais: 'BR', peso: 2 },
   { url: 'https://agencia.fapesp.br/rss',            nome: 'Agência FAPESP', pais: 'BR', peso: 1 },
