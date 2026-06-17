@@ -76,7 +76,11 @@ async function listaModelos(apiKey) {
 // Limitado por um prazo TOTAL (deadlineMs). O timeout de cada modelo nunca passa
 // do tempo restante do prazo — assim a função serverless SEMPRE retorna a tempo
 // (no pior caso o chamador cai na heurística). Evita o 504 por estouro de tempo.
-async function chamarOpenRouter(apiKey, { messages, maxTokens = 3000, temperature = 0.4, deadlineMs = 40000, porModeloMs = 18000 }) {
+//
+// Calibração (orçamento de ~60s do maxDuration, menos ~12s de coleta de feeds):
+// porModeloMs curto (13s) abandona rápido um modelo lento e sobra tempo para
+// tentar 2-3 modelos (incluindo os gratuitos rápidos) dentro do deadline de 42s.
+async function chamarOpenRouter(apiKey, { messages, maxTokens = 3000, temperature = 0.4, deadlineMs = 42000, porModeloMs = 13000 }) {
   const inicio = Date.now();
   const erros = [];
   for (const model of await listaModelos(apiKey)) {
@@ -89,6 +93,7 @@ async function chamarOpenRouter(apiKey, { messages, maxTokens = 3000, temperatur
     // O timeout do modelo é limitado pelo prazo restante: um modelo lento não
     // pode consumir o tempo de todos os outros nem estourar o deadline total.
     const t = setTimeout(() => ctrl.abort(), Math.min(porModeloMs, restante));
+    const tModelo = Date.now();
     try {
       const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
@@ -102,21 +107,30 @@ async function chamarOpenRouter(apiKey, { messages, maxTokens = 3000, temperatur
         signal: ctrl.signal,
       });
       clearTimeout(t);
+      const ms = Date.now() - tModelo;
 
       if (!resp.ok) {
         erros.push(`${model}:${resp.status}`);
+        console.warn(`[openrouter] ${model} → HTTP ${resp.status} em ${ms}ms`);
         continue;
       }
 
       const data = await resp.json();
       const content = data?.choices?.[0]?.message?.content || '';
-      if (content) return content;
+      if (content) {
+        console.log(`[openrouter] ${model} ✓ respondeu em ${Date.now() - tModelo}ms (total ${Date.now() - inicio}ms)`);
+        return content;
+      }
       erros.push(`${model}:vazio`);
+      console.warn(`[openrouter] ${model} → resposta vazia em ${ms}ms`);
     } catch (e) {
       clearTimeout(t);
-      erros.push(`${model}:${e.name === 'AbortError' ? 'timeout' : e.message}`);
+      const motivo = e.name === 'AbortError' ? 'timeout' : e.message;
+      erros.push(`${model}:${motivo}`);
+      console.warn(`[openrouter] ${model} → ${motivo} em ${Date.now() - tModelo}ms`);
     }
   }
+  console.error(`[openrouter] nenhum modelo respondeu em ${Date.now() - inicio}ms: ${erros.join(' | ')}`);
   throw new Error(`OpenRouter falhou: ${erros.join(' | ')}`);
 }
 

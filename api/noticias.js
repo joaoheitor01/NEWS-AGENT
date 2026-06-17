@@ -45,10 +45,12 @@ module.exports = async function handler(req, res) {
 
     if (apiKey) {
       try {
-        // Rede de segurança: limite de tempo total para a IA. Se estourar, cai na
-        // heurística e retorna rápido — garante que a função nunca dê timeout (504).
+        // Rede de segurança: teto de tempo total para a IA, logo acima do
+        // deadline interno (42s) do chamarOpenRouter. Se estourar, cai na
+        // heurística — garante que a função nunca dê timeout (504). Mantém
+        // margem sob o maxDuration de 60s da Vercel (≈12s de coleta + 46s aqui).
         const guarda = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('tempo limite da IA')), 45000)
+          setTimeout(() => reject(new Error('tempo limite da IA')), 46000)
         );
         const r = await Promise.race([curadoriaIA(apiKey, candidatos), guarda]);
         noticias = r.noticias;

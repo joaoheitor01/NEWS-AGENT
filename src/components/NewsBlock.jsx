@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { topicMeta } from '../lib/topics';
-import { tempoRelativo, linkSeguro } from '../lib/format';
+import { tempoRelativo, linkSeguro, truncar } from '../lib/format';
+import Logo from './Logo';
 
 // Bloco editorial de notícia. variant: 'lead' (destaque) | 'standard'.
 export default function NewsBlock({ noticia, variant = 'standard', expanded, onToggle, onSave, isSaved, onShare }) {
@@ -37,7 +38,10 @@ export default function NewsBlock({ noticia, variant = 'standard', expanded, onT
     </div>
   );
 
-  const Imagem = temImagem && (
+  // Sempre renderiza um bloco de imagem: a foto real ou, quando ausente/quebrada,
+  // um fallback neutro (logo TNA sobre um leve gradiente do tema). Mesma proporção
+  // nos dois casos, então o layout do card não muda de altura.
+  const Imagem = temImagem ? (
     <div className={`overflow-hidden bg-[var(--color-section)] ${isLead ? 'aspect-[16/9]' : 'aspect-[3/2]'}`}>
       <img
         src={noticia.imagem}
@@ -46,6 +50,14 @@ export default function NewsBlock({ noticia, variant = 'standard', expanded, onT
         onError={() => setImgErro(true)}
         className="h-full w-full object-cover grayscale-[15%] transition-all duration-300 group-hover:grayscale-0 group-hover:scale-[1.02]"
       />
+    </div>
+  ) : (
+    <div
+      aria-hidden="true"
+      className={`flex items-center justify-center overflow-hidden border border-[var(--color-border)] ${isLead ? 'aspect-[16/9]' : 'aspect-[3/2]'}`}
+      style={{ backgroundImage: 'linear-gradient(135deg, var(--color-section) 0%, var(--color-bg) 100%)' }}
+    >
+      <Logo className={`w-auto text-[var(--color-ink-faint)] opacity-40 ${isLead ? 'h-12' : 'h-9'}`} />
     </div>
   );
 
@@ -104,14 +116,14 @@ export default function NewsBlock({ noticia, variant = 'standard', expanded, onT
         onClick={onToggle}
         className="group grid cursor-pointer gap-x-8 gap-y-4 md:grid-cols-2 animate-[var(--animate-fade-up)]"
       >
-        {Imagem && <div className="md:order-2">{Imagem}</div>}
+        <div className="md:order-2">{Imagem}</div>
         <div className="flex flex-col gap-3 md:order-1 md:self-center">
           {Kicker}
           <h2 className="font-[family-name:var(--font-serif)] text-[26px] sm:text-[32px] font-semibold leading-[1.12] tracking-[-0.01em] text-[var(--color-ink)] group-hover:text-black">
             {tituloTxt}
           </h2>
-          <p className={`font-[family-name:var(--font-serif)] text-[16px] leading-relaxed text-[var(--color-ink-muted)] ${expanded ? '' : 'line-clamp-3'}`}>
-            {noticia.resumo}
+          <p className="font-[family-name:var(--font-serif)] text-[16px] leading-relaxed text-[var(--color-ink-muted)]">
+            {expanded ? noticia.resumo : truncar(noticia.resumo, 240)}
           </p>
           {Pontos}
           {Byline}
@@ -132,8 +144,8 @@ export default function NewsBlock({ noticia, variant = 'standard', expanded, onT
       <h3 className="font-[family-name:var(--font-serif)] text-[19px] font-semibold leading-[1.2] text-[var(--color-ink)] group-hover:underline decoration-1 underline-offset-2">
         {tituloTxt}
       </h3>
-      <p className={`font-[family-name:var(--font-serif)] text-[14.5px] leading-relaxed text-[var(--color-ink-muted)] ${expanded ? '' : 'line-clamp-3'}`}>
-        {noticia.resumo}
+      <p className="font-[family-name:var(--font-serif)] text-[14.5px] leading-relaxed text-[var(--color-ink-muted)]">
+        {expanded ? noticia.resumo : truncar(noticia.resumo, 170)}
       </p>
       {Pontos}
       {Byline}
