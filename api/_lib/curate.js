@@ -89,8 +89,16 @@ function pontuar(item, topico = null) {
   for (const k of keywords) if (texto.includes(k)) hits++;
   if (topico && hits === 0) return 0; // num tópico específico, exige ao menos 1 match
 
-  const recencia = item.timestamp ? Math.max(0, 1 - (Date.now() - item.timestamp) / (1000 * 60 * 60 * 72)) : 0;
-  return hits * 3 + item.peso + recencia * 2;
+  // Recência: decaimento EXPONENCIAL por horas desde a publicação (meia-vida de
+  // ~2,5 dias). Ao contrário do corte linear antigo (zerava de vez aos 3 dias e
+  // tratava 4 dias e 23 semanas como iguais), aqui a pontuação cai de forma
+  // contínua e ACENTUADA: itens com mais de ~7 dias perdem quase todo o bônus e
+  // notícias de meses ficam praticamente em zero — sem competir com as de hoje.
+  // Peso 16 torna a recência um fator forte, à altura da relevância.
+  const MEIA_VIDA_H = 60; // a cada 60h o bônus de recência cai pela metade
+  const idadeH = item.timestamp ? (Date.now() - item.timestamp) / 3600000 : Infinity;
+  const recencia = Math.pow(0.5, idadeH / MEIA_VIDA_H); // 1.0 agora → 0 quando muito antigo
+  return hits * 3 + item.peso + recencia * 16;
 }
 
 // Remove duplicatas por link e por título muito parecido (sobreposição de tokens).

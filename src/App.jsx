@@ -7,7 +7,7 @@ import SearchBar from './components/SearchBar';
 import { TOPICS, topicMeta } from './lib/topics';
 import { buscarNoticias } from './lib/api';
 import { getSaved, setSaved as persistSaved, toggleSaved, isSaved, getCache, setCache } from './lib/storage';
-import { saudacao, tempoRelativo, filtrarPorTexto, ordenarPorImpacto } from './lib/format';
+import { saudacao, tempoRelativo, filtrarPorTexto, ordenarPorImpacto, ordenarPorData } from './lib/format';
 
 function cacheInicial() {
   const cache = getCache();
@@ -140,6 +140,7 @@ export default function App() {
   const lista = useMemo(() => {
     let l = filtrarPorTexto(baseList, search);
     if (sort === 'impacto') l = ordenarPorImpacto(l);
+    else if (sort === 'recentes') l = ordenarPorData(l);
     return l;
   }, [baseList, search, sort]);
 
@@ -230,7 +231,7 @@ export default function App() {
             {!isSalvos && (
               <div className="flex items-center gap-3 font-[family-name:var(--font-sans)] text-[12px]">
                 <span className="uppercase tracking-wide text-[var(--color-ink-faint)]">Ordenar:</span>
-                {[['relevancia', 'Relevância'], ['impacto', 'Impacto']].map(([key, lbl]) => (
+                {[['relevancia', 'Relevância'], ['impacto', 'Impacto'], ['recentes', 'Recentes']].map(([key, lbl]) => (
                   <button
                     key={key}
                     onClick={() => setSort(key)}

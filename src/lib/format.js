@@ -58,3 +58,8 @@ export function ordenarPorImpacto(noticias) {
     return (Date.parse(b.data) || 0) - (Date.parse(a.data) || 0);
   });
 }
+
+// Ordena estritamente por data (mais recentes primeiro), ignorando o score.
+export function ordenarPorData(noticias) {
+  return [...noticias].sort((a, b) => (Date.parse(b.data) || 0) - (Date.parse(a.data) || 0));
+}
