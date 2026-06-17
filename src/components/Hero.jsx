@@ -79,19 +79,9 @@ export default function Hero() {
 
             {/* Texto do slide (troca junto com a imagem) */}
             <div className="relative flex min-h-[380px] flex-col justify-between gap-10 p-7 sm:p-10 md:min-h-[460px] md:p-14 md:max-w-[62%]">
-              <div className="flex flex-col gap-5">
-                <h1 className="font-[family-name:var(--font-serif)] text-3xl leading-[1.06] tracking-[-0.01em] sm:text-4xl md:text-5xl">
-                  {s.frase}
-                </h1>
-                <div className="flex flex-col gap-2">
-                  <span className="font-[family-name:var(--font-sans)] text-[11px] font-semibold uppercase tracking-[0.32em] text-white/70">
-                    Curated Intelligence
-                  </span>
-                  <p className="font-[family-name:var(--font-serif)] text-base text-white/85 md:text-lg">
-                    Curadoria das notícias de tecnologia que realmente importam.
-                  </p>
-                </div>
-              </div>
+              <h1 className="font-[family-name:var(--font-serif)] text-3xl leading-[1.06] tracking-[-0.01em] sm:text-4xl md:text-5xl">
+                {s.frase}
+              </h1>
 
               {s.citacao && (
                 <blockquote className="border-l border-white/30 pl-4 font-[family-name:var(--font-serif)] text-sm italic text-white/65 md:text-[15px]">
