@@ -30,6 +30,18 @@ export function tempoRelativo(data) {
   return `há ${sem} sem`;
 }
 
+// Trunca um texto SEMPRE no limite de uma palavra inteira (nunca no meio dela).
+// Se o texto já couber em `max`, devolve igual — sem reticências.
+export function truncar(texto, max = 180) {
+  const t = (texto || '').trim();
+  if (t.length <= max) return t;
+  const corte = t.slice(0, max);
+  const ultimoEspaco = corte.lastIndexOf(' ');
+  const base = ultimoEspaco > 0 ? corte.slice(0, ultimoEspaco) : corte;
+  // Remove pontuação/espaço solto no fim antes de acrescentar as reticências.
+  return `${base.replace(/[\s.,;:!?–—-]+$/, '')}…`;
+}
+
 export const IMPACTO_RANK = { alto: 3, médio: 2, medio: 2, baixo: 1, curto: 1 };
 
 // Saudação conforme a hora.
